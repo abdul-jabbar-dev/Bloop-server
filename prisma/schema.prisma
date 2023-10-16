@@ -1,0 +1,170 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Gender {
+  male
+  female
+}
+
+enum Role {
+  subscriber
+  admin
+  serviceProvider
+  super_admin
+}
+
+enum Status {
+  active
+  deactive
+  pending
+}
+
+model User {
+  id           String      @id @default(uuid())
+  firstName    String
+  lastName     String
+  email        String      @unique()
+  profileImage String?
+  address      String?
+  contactNo    String?
+  gender       Gender?
+  dateOfBirth  String?
+  role         Role
+  bloodGroup   String?
+  credential   Credential?
+  status       Status
+  subscriber   Subscriber?
+
+  @@map("user")
+}
+
+model Credential {
+  id           String  @id @default(uuid())
+  userId       String  @unique
+  role         Role
+  email        String  @unique()
+  password     String
+  accessToken  String?
+  refreshToken String?
+  user         User    @relation(fields: [userId], references: [id])
+
+  @@map("credential")
+}
+
+model ServiceType {
+  id      String    @id @default(uuid())
+  title   String    @unique
+  Service Service[]
+
+  @@map("serviceType")
+}
+
+model Service {
+  id                String          @id @default(uuid())
+  title             String          @unique
+  price             Int
+  serviceTypeId     String          @unique()
+  service           ServiceType     @relation(fields: [serviceTypeId], references: [id])
+  orderType         String
+  serviceArea       String
+  inServicePackage  String[]
+  details           String
+  serviceGuarantee  String
+  serviceItem       String[]
+  status            Status
+  feedback          Feedback[]
+  servicePlaced     ServicePlaced[]
+  serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id])
+  serviceProviderId String
+
+  @@map("service")
+}
+
+model ServiceProvider {
+  id            String          @id @default(uuid())
+  service       Service[]
+  bookedDate    String
+  availability  Boolean
+  status        Status
+  feedback      Feedback[]
+  servicePlaced ServicePlaced[]
+
+  @@map("serviceProvider")
+}
+
+model Subscriber {
+  id              String            @id @default(uuid())
+  status          Status
+  user            User              @relation(fields: [userId], references: [id])
+  userId          String            @unique
+  order           Order[]
+  shippingAddress ShippingAddress[]
+
+  @@map("subscriber")
+}
+
+model ShippingAddress {
+  id String @id @default(uuid())
+
+  subscriberId String
+  subscriber   Subscriber @relation(fields: [subscriberId], references: [id])
+
+  shippingNumber String
+  country        String
+  street         String
+  town           String
+  city           String
+  address        String
+  label          String
+  contactNo      String
+
+  @@map("shippingAddress")
+}
+
+model Order {
+  id              String         @id @default(uuid())
+  subscriberId    String
+  subscriber      Subscriber     @relation(fields: [subscriberId], references: [id])
+  servicePlacedId String
+  feedback        Feedback[]
+  servicePlaced   ServicePlaced?
+
+  @@map("order")
+}
+
+model ServicePlaced {
+  id         String @id @default(uuid())
+  bookedDate String
+
+  orderId           String          @unique
+  order             Order           @relation(fields: [orderId], references: [id])
+  serviceId         String
+  service           Service         @relation(fields: [serviceId], references: [id])
+  serviceProviderId String
+  serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id])
+
+  @@map("servicePlaced")
+}
+
+model Feedback {
+  id                String          @id @default(uuid())
+  message           String
+  rating            Int
+  orderId           String
+  order             Order           @relation(fields: [orderId], references: [id])
+  serviceId         String
+  service           Service         @relation(fields: [serviceId], references: [id])
+  serviceProviderId String
+  serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id])
+
+  @@map("feedback")
+}
