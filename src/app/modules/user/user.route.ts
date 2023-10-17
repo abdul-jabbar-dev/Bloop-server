@@ -19,5 +19,9 @@ UserRoute.patch(
   validateRequestJson(UpdateProfileUserSchema),
   UserController.updateUser
 );
-// UserRoute.patch("/:id", UserController.updateUser);
+UserRoute.get(
+  "/my-profile",
+  Auth(["admin", "serviceProvider", "subscriber", "super_admin"]),
+  UserController.getMyProfile
+);
 export default UserRoute;

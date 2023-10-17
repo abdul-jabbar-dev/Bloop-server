@@ -80,24 +80,23 @@ model Service {
   title            String @unique
   price            Int
   orderType        String
-  serviceArea      String
+  serviceArea      String[]
   details          String
   serviceGuarantee String
   status           Status
-  thumbnail        String @unique()
+  serviceItem      String[]
+  inServicePackage String[]
 
-  image Media? @relation(fields: [thumbnail], references: [id])
+  thumbnail String @unique()
+  image     Media? @relation(fields: [thumbnail], references: [id])
 
   serviceTypeId String      @unique()
   service       ServiceType @relation(fields: [serviceTypeId], references: [id])
 
-  serviceProviderId String
-  serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id])
+  serviceProvider ServiceProvider[]
 
-  inServicePackage String[]
   feedback         Feedback[]
   servicePlaced    ServicePlaced[]
-  serviceItem      String[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -106,8 +105,11 @@ model Service {
 }
 
 model ServiceProvider {
-  id            String          @id @default(uuid())
-  service       Service[]
+  id String @id @default(uuid())
+
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id])
+
   bookedDate    String
   availability  Boolean
   status        Status

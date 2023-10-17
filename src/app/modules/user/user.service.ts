@@ -103,6 +103,11 @@ const getUsersDb = async () => {
   return result;
 };
 
+const getMyProfileDb = async (user: JwtPayload) => {
+  const result = await DB.user.findUnique({ where: { id: user.id } });
+  return result;
+};
+
 const updateUserDb = async (
   user: JwtPayload,
   userInfo: Partial<User>,
@@ -114,7 +119,7 @@ const updateUserDb = async (
     userInfo = { profileImage: "" };
   }
   try {
-    const session = await DB.$transaction(async (asyncDB) => {
+     await DB.$transaction(async (asyncDB) => {
       if (image) {
         const isExistImage = await asyncDB.media.findMany({
           where: { user: { id: user.id } },
@@ -145,8 +150,7 @@ const updateUserDb = async (
         }
       }
       if (uploadImage) {
-        userInfo.profileImage = uploadImage.id;
-        console.log(userInfo);
+        userInfo.profileImage = uploadImage.id; 
       }
       delete userInfo?.email;
 
@@ -166,6 +170,7 @@ const updateUserDb = async (
 const UserService = {
   createUserDb,
   getUsersDb,
+  getMyProfileDb,
   updateUserDb,
   loginUserDb,
   resetPassword,

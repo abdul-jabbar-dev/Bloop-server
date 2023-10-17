@@ -5,7 +5,7 @@ import { CreateUser, LoginUser } from "../../../types/user/user";
 import UserService from "./user.service";
 import ImgUpload from "../../../shared/uploads/imgUpload";
 
-import { UploadApiResponse } from "cloudinary";
+import { UploadApiResponse } from "cloudinary"; 
 //Auth route
 const createUser = catchAsync(async (req, res) => {
   const user: CreateUser = req.body;
@@ -59,7 +59,19 @@ const getUsers = catchAsync(async (req, res) => {
   res.send(result);
 });
 
-const updateUser = catchAsync(async (req, res) => { 
+const getMyProfile = catchAsync(async (req, res) => {
+  const user = req.user;
+  if (!user) {
+    throw new Error("My credential not found! try login first");
+  }
+  const result = await UserService.getMyProfileDb(user);
+  sendResponse(res, {
+    message: "My profile fetched Successfully",
+    data: result,
+  });
+});
+
+const updateUser = catchAsync(async (req, res) => {
   const profile = req.file;
   let uploadedImage: UploadApiResponse | null = null;
   const user = req.user;
@@ -69,7 +81,7 @@ const updateUser = catchAsync(async (req, res) => {
   if (profile) {
     uploadedImage = await ImgUpload(profile.path, {
       folder: "bloop",
-    }); 
+    });
   }
   const result = await UserService.updateUserDb(user, req.body, uploadedImage);
   sendResponse(res, {
@@ -80,6 +92,7 @@ const updateUser = catchAsync(async (req, res) => {
 
 const UserController = {
   createUser,
+  getMyProfile,
   getUsers,
   updateUser,
   loginUser,

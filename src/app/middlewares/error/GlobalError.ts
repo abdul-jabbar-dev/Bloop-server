@@ -6,6 +6,8 @@ import {
 } from "@prisma/client/runtime/library";
 import prismaClientValidationError from "./errors/prisma/prismaClientValidationError";
 import prismaClientKnownRequestError from "./errors/prisma/prismaClientKnownRequestError";
+import { ZodError } from "zod";
+import zodValidator from "./errors/zod/zodValidator";
 
 const GlobalError: ErrorRequestHandler = (
   err,
@@ -13,17 +15,24 @@ const GlobalError: ErrorRequestHandler = (
   res: Response,
   next: NextFunction
 ) => {
+  console.log(
+    err,
+    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>global>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+  );
+
   let error: TError = {
     name: err.name,
     message: err.message,
     statusCode: 400,
     path: { path: err.message, message: "" },
   };
-console.log(err)
+
   if (err instanceof PrismaClientValidationError) {
     error = prismaClientValidationError(err);
   } else if (err instanceof PrismaClientKnownRequestError) {
     error = prismaClientKnownRequestError(err);
+  } else if (err instanceof ZodError) {
+    error = zodValidator(err);
   }
   res.send(error);
 };
