@@ -33,7 +33,8 @@ model User {
   firstName    String
   lastName     String
   email        String      @unique()
-  profileImage String?
+  profileImage String?     @unique
+  image        Media?      @relation(fields: [profileImage], references: [id])
   address      String?
   contactNo    String?
   gender       Gender?
@@ -43,48 +44,63 @@ model User {
   credential   Credential?
   status       Status
   subscriber   Subscriber?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
   @@map("user")
 }
 
 model Credential {
-  id           String  @id @default(uuid())
-  userId       String  @unique
+  id           String   @id @default(uuid())
+  userId       String   @unique
   role         Role
-  email        String  @unique()
+  email        String   @unique()
   password     String
   accessToken  String?
   refreshToken String?
-  user         User    @relation(fields: [userId], references: [id])
+  user         User     @relation(fields: [userId], references: [id])
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@map("credential")
 }
 
 model ServiceType {
-  id      String    @id @default(uuid())
-  title   String    @unique
-  Service Service[]
+  id        String    @id @default(uuid())
+  title     String    @unique
+  Service   Service[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
   @@map("serviceType")
 }
 
 model Service {
-  id                String          @id @default(uuid())
-  title             String          @unique
-  price             Int
-  serviceTypeId     String          @unique()
-  service           ServiceType     @relation(fields: [serviceTypeId], references: [id])
-  orderType         String
-  serviceArea       String
-  inServicePackage  String[]
-  details           String
-  serviceGuarantee  String
-  serviceItem       String[]
-  status            Status
-  feedback          Feedback[]
-  servicePlaced     ServicePlaced[]
-  serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id])
+  id               String @id @default(uuid())
+  title            String @unique
+  price            Int
+  orderType        String
+  serviceArea      String
+  details          String
+  serviceGuarantee String
+  status           Status
+  thumbnail        String @unique()
+
+  image Media? @relation(fields: [thumbnail], references: [id])
+
+  serviceTypeId String      @unique()
+  service       ServiceType @relation(fields: [serviceTypeId], references: [id])
+
   serviceProviderId String
+  serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id])
+
+  inServicePackage String[]
+  feedback         Feedback[]
+  servicePlaced    ServicePlaced[]
+  serviceItem      String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("service")
 }
@@ -97,6 +113,8 @@ model ServiceProvider {
   status        Status
   feedback      Feedback[]
   servicePlaced ServicePlaced[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
 
   @@map("serviceProvider")
 }
@@ -108,6 +126,8 @@ model Subscriber {
   userId          String            @unique
   order           Order[]
   shippingAddress ShippingAddress[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 
   @@map("subscriber")
 }
@@ -126,6 +146,8 @@ model ShippingAddress {
   address        String
   label          String
   contactNo      String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
   @@map("shippingAddress")
 }
@@ -137,6 +159,8 @@ model Order {
   servicePlacedId String
   feedback        Feedback[]
   servicePlaced   ServicePlaced?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
   @@map("order")
 }
@@ -151,6 +175,8 @@ model ServicePlaced {
   service           Service         @relation(fields: [serviceId], references: [id])
   serviceProviderId String
   serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id])
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 
   @@map("servicePlaced")
 }
@@ -165,6 +191,25 @@ model Feedback {
   service           Service         @relation(fields: [serviceId], references: [id])
   serviceProviderId String
   serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id])
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 
   @@map("feedback")
+}
+
+model Media {
+  id                String   @id @default(uuid())
+  public_id         String
+  format            String
+  created_at        String
+  url               String
+  secure_url        String
+  folder            String?
+  original_filename String
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  user              User?
+  service           Service?
+
+  @@map("media")
 }

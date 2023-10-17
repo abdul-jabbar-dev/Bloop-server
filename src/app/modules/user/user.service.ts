@@ -1,9 +1,12 @@
-import { Credential, Role, User } from "@prisma/client";
+import { Credential, Media, Role, User } from "@prisma/client";
 import DB from "../../../db/prismaClient";
 import B from "../../../shared/bcrypt";
 import { CreateUser, LoginUser } from "../../../types/user/user";
 import JWT from "../../../shared/jwt";
 import config from "../../../config";
+import { UploadApiResponse } from "cloudinary";
+import { JwtPayload } from "jsonwebtoken";
+import { ImgDelete } from "../../../shared/uploads/imgUpload";
 //Auth
 const createUserDb = async (data: CreateUser): Promise<Credential> => {
   const { password, ...user } = data;
@@ -100,9 +103,64 @@ const getUsersDb = async () => {
   return result;
 };
 
-const updateUserDb = async () => {
-  const result = await DB.user.findMany();
-  return result;
+const updateUserDb = async (
+  user: JwtPayload,
+  userInfo: Partial<User>,
+  image: UploadApiResponse | null
+) => {
+  let uploadImage: Media | null = null;
+  let updateProfile: User | null = null;
+  if (!userInfo) {
+    userInfo = { profileImage: "" };
+  }
+  try {
+    const session = await DB.$transaction(async (asyncDB) => {
+      if (image) {
+        const isExistImage = await asyncDB.media.findMany({
+          where: { user: { id: user.id } },
+        });
+        if (isExistImage) {
+          isExistImage.forEach(async (existImg: Media) => {
+            ImgDelete(existImg.public_id);
+            await asyncDB.media.delete({
+              where: { id: existImg.id },
+            });
+          });
+        }
+
+        uploadImage = await asyncDB.media.create({
+          data: {
+            format: image.format,
+            original_filename: image.original_filename,
+            public_id: image.public_id,
+            secure_url: image.secure_url,
+            url: image.url,
+            folder: image?.folder,
+            created_at: image.created_at,
+          },
+        });
+
+        if (!uploadImage) {
+          throw new Error("Profile Update failed");
+        }
+      }
+      if (uploadImage) {
+        userInfo.profileImage = uploadImage.id;
+        console.log(userInfo);
+      }
+      delete userInfo?.email;
+
+      updateProfile = await asyncDB.user.update({
+        where: { id: user.id },
+        data: userInfo,
+      });
+    });
+
+    return updateProfile;
+  } catch (error) {
+    ImgDelete((image as UploadApiResponse).public_id!);
+    throw new Error((error as any).message);
+  }
 };
 
 const UserService = {

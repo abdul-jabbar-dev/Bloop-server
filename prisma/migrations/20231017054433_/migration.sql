@@ -13,7 +13,7 @@ CREATE TABLE "user" (
     "firstName" TEXT NOT NULL,
     "lastName" TEXT NOT NULL,
     "email" TEXT NOT NULL,
-    "profileImage" TEXT,
+    "profileImage" TEXT NOT NULL,
     "address" TEXT,
     "contactNo" TEXT,
     "gender" "Gender",
@@ -21,6 +21,8 @@ CREATE TABLE "user" (
     "role" "Role" NOT NULL,
     "bloodGroup" TEXT,
     "status" "Status" NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "user_pkey" PRIMARY KEY ("id")
 );
@@ -34,6 +36,8 @@ CREATE TABLE "credential" (
     "password" TEXT NOT NULL,
     "accessToken" TEXT,
     "refreshToken" TEXT,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "credential_pkey" PRIMARY KEY ("id")
 );
@@ -42,6 +46,8 @@ CREATE TABLE "credential" (
 CREATE TABLE "serviceType" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "serviceType_pkey" PRIMARY KEY ("id")
 );
@@ -51,15 +57,18 @@ CREATE TABLE "service" (
     "id" TEXT NOT NULL,
     "title" TEXT NOT NULL,
     "price" INTEGER NOT NULL,
-    "serviceTypeId" TEXT NOT NULL,
     "orderType" TEXT NOT NULL,
     "serviceArea" TEXT NOT NULL,
-    "inServicePackage" TEXT[],
     "details" TEXT NOT NULL,
     "serviceGuarantee" TEXT NOT NULL,
-    "serviceItem" TEXT[],
     "status" "Status" NOT NULL,
+    "thumbnail" TEXT NOT NULL,
+    "serviceTypeId" TEXT NOT NULL,
     "serviceProviderId" TEXT NOT NULL,
+    "inServicePackage" TEXT[],
+    "serviceItem" TEXT[],
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "service_pkey" PRIMARY KEY ("id")
 );
@@ -70,6 +79,8 @@ CREATE TABLE "serviceProvider" (
     "bookedDate" TEXT NOT NULL,
     "availability" BOOLEAN NOT NULL,
     "status" "Status" NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "serviceProvider_pkey" PRIMARY KEY ("id")
 );
@@ -79,6 +90,8 @@ CREATE TABLE "subscriber" (
     "id" TEXT NOT NULL,
     "status" "Status" NOT NULL,
     "userId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "subscriber_pkey" PRIMARY KEY ("id")
 );
@@ -95,6 +108,8 @@ CREATE TABLE "shippingAddress" (
     "address" TEXT NOT NULL,
     "label" TEXT NOT NULL,
     "contactNo" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "shippingAddress_pkey" PRIMARY KEY ("id")
 );
@@ -104,6 +119,8 @@ CREATE TABLE "order" (
     "id" TEXT NOT NULL,
     "subscriberId" TEXT NOT NULL,
     "servicePlacedId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "order_pkey" PRIMARY KEY ("id")
 );
@@ -115,6 +132,8 @@ CREATE TABLE "servicePlaced" (
     "orderId" TEXT NOT NULL,
     "serviceId" TEXT NOT NULL,
     "serviceProviderId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "servicePlaced_pkey" PRIMARY KEY ("id")
 );
@@ -127,12 +146,35 @@ CREATE TABLE "feedback" (
     "orderId" TEXT NOT NULL,
     "serviceId" TEXT NOT NULL,
     "serviceProviderId" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
 
     CONSTRAINT "feedback_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateTable
+CREATE TABLE "media" (
+    "id" TEXT NOT NULL,
+    "assest_id" TEXT NOT NULL,
+    "public_id" TEXT NOT NULL,
+    "formet" TEXT NOT NULL,
+    "created_at" TIMESTAMP(3) NOT NULL,
+    "url" TEXT NOT NULL,
+    "secure_url" TEXT NOT NULL,
+    "folder" TEXT NOT NULL,
+    "api_key" TEXT NOT NULL,
+    "original_filename" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "media_pkey" PRIMARY KEY ("id")
+);
+
 -- CreateIndex
 CREATE UNIQUE INDEX "user_email_key" ON "user"("email");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "user_profileImage_key" ON "user"("profileImage");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "credential_userId_key" ON "credential"("userId");
@@ -147,6 +189,9 @@ CREATE UNIQUE INDEX "serviceType_title_key" ON "serviceType"("title");
 CREATE UNIQUE INDEX "service_title_key" ON "service"("title");
 
 -- CreateIndex
+CREATE UNIQUE INDEX "service_thumbnail_key" ON "service"("thumbnail");
+
+-- CreateIndex
 CREATE UNIQUE INDEX "service_serviceTypeId_key" ON "service"("serviceTypeId");
 
 -- CreateIndex
@@ -156,7 +201,13 @@ CREATE UNIQUE INDEX "subscriber_userId_key" ON "subscriber"("userId");
 CREATE UNIQUE INDEX "servicePlaced_orderId_key" ON "servicePlaced"("orderId");
 
 -- AddForeignKey
+ALTER TABLE "user" ADD CONSTRAINT "user_profileImage_fkey" FOREIGN KEY ("profileImage") REFERENCES "media"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "credential" ADD CONSTRAINT "credential_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "service" ADD CONSTRAINT "service_thumbnail_fkey" FOREIGN KEY ("thumbnail") REFERENCES "media"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "service" ADD CONSTRAINT "service_serviceTypeId_fkey" FOREIGN KEY ("serviceTypeId") REFERENCES "serviceType"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

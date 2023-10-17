@@ -1,8 +1,11 @@
-import { Credential } from "@prisma/client";
+import { Credential, Media } from "@prisma/client";
 import sendResponse from "../../../shared/Response/sendResponse";
 import catchAsync from "../../../shared/catchAsync";
 import { CreateUser, LoginUser } from "../../../types/user/user";
 import UserService from "./user.service";
+import ImgUpload from "../../../shared/uploads/imgUpload";
+
+import { UploadApiResponse } from "cloudinary";
 //Auth route
 const createUser = catchAsync(async (req, res) => {
   const user: CreateUser = req.body;
@@ -56,9 +59,23 @@ const getUsers = catchAsync(async (req, res) => {
   res.send(result);
 });
 
-const updateUser = catchAsync(async (req, res) => {
-  const result = await UserService.updateUserDb();
-  res.send(result);
+const updateUser = catchAsync(async (req, res) => { 
+  const profile = req.file;
+  let uploadedImage: UploadApiResponse | null = null;
+  const user = req.user;
+  if (!user) {
+    throw new Error("User required!");
+  }
+  if (profile) {
+    uploadedImage = await ImgUpload(profile.path, {
+      folder: "bloop",
+    }); 
+  }
+  const result = await UserService.updateUserDb(user, req.body, uploadedImage);
+  sendResponse(res, {
+    message: "Profile update Successfully",
+    data: result,
+  });
 });
 
 const UserController = {
