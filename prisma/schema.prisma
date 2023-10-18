@@ -7,7 +7,8 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  url      = "postgresql://bloopAdmin:32002@localhost:5432/bloop?schema=public"
+  // ||env("DATABASE_URL")
 }
 
 enum Gender {
@@ -76,8 +77,8 @@ model ServiceType {
 }
 
 model Service {
-  id               String @id @default(uuid())
-  title            String @unique
+  id               String   @id @default(uuid())
+  title            String   @unique
   price            Int
   orderType        String
   serviceArea      String[]
@@ -95,8 +96,8 @@ model Service {
 
   serviceProvider ServiceProvider[]
 
-  feedback         Feedback[]
-  servicePlaced    ServicePlaced[]
+  feedback      Feedback[]
+  servicePlaced ServicePlaced[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

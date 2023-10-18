@@ -15,17 +15,15 @@ ShippingAddressRoute.post(
   validateRequest(CreateShippingAddressSchema),
   ShippingAddressControl.createShippingAddress
 );
-ShippingAddressRoute.get("/", ShippingAddressControl.getShippingAddress);
+ShippingAddressRoute.get(
+  "/",
+  Auth(["subscriber"]),
+  ShippingAddressControl.getShippingAddress
+);
 ShippingAddressRoute.get(
   "/:shippingAddressId",
-  ShippingAddressControl.getAShippingAddress
-);
-
-ShippingAddressRoute.patch(
-  "/:shippingAddressId",
   Auth(["subscriber"]),
-  validateRequest(UpdateShippingAddressSchema),
-  ShippingAddressControl.updateShippingAddress
+  ShippingAddressControl.getAShippingAddress
 );
 ShippingAddressRoute.delete(
   "/:shippingAddressId",
@@ -33,4 +31,13 @@ ShippingAddressRoute.delete(
   ShippingAddressControl.deleteShippingAddress
 );
 
+
+
+// Unhandled
+ShippingAddressRoute.patch(
+  "/:shippingAddressId",
+  Auth(["subscriber"]),
+  validateRequest(UpdateShippingAddressSchema),
+  ShippingAddressControl.updateShippingAddress
+);
 export default ShippingAddressRoute;

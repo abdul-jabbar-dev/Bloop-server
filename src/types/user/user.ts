@@ -4,7 +4,7 @@ export type CreateUser = {
   lastName: string;
   password: string;
   email: string;
-  status: "pending";
+  status: "active";
   role: "subscriber";
 };
  

@@ -45,6 +45,12 @@ const createUserDb = async (data: CreateUser): Promise<Credential> => {
     createCredential = await asyncDB.credential.create({
       data: credentialData,
     });
+    const newSubscriber = await asyncDB.subscriber.create({
+      data: { status: "active", userId: newUser.id },
+    });
+    if (!newSubscriber) {
+      throw new Error("User create unsuccessfully!");
+    }
   });
   if (createCredential === null) {
     throw new Error("Account create unsuccessfully");
@@ -119,7 +125,7 @@ const updateUserDb = async (
     userInfo = { profileImage: "" };
   }
   try {
-     await DB.$transaction(async (asyncDB) => {
+    await DB.$transaction(async (asyncDB) => {
       if (image) {
         const isExistImage = await asyncDB.media.findMany({
           where: { user: { id: user.id } },
@@ -150,7 +156,7 @@ const updateUserDb = async (
         }
       }
       if (uploadImage) {
-        userInfo.profileImage = uploadImage.id; 
+        userInfo.profileImage = uploadImage.id;
       }
       delete userInfo?.email;
 

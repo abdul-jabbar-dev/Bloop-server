@@ -1,4 +1,4 @@
-import { Credential, Media } from "@prisma/client";
+import { Credential } from "@prisma/client";
 import sendResponse from "../../../shared/Response/sendResponse";
 import catchAsync from "../../../shared/catchAsync";
 import { CreateUser, LoginUser } from "../../../types/user/user";
@@ -9,7 +9,7 @@ import { UploadApiResponse } from "cloudinary";
 //Auth route
 const createUser = catchAsync(async (req, res) => {
   const user: CreateUser = req.body;
-  user["status"] = "pending";
+  user["status"] = "active";
   user["role"] = "subscriber";
   const result = await UserService.createUserDb(user);
 
