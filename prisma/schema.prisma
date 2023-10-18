@@ -7,7 +7,8 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = "postgresql://bloopAdmin:32002@localhost:5432/bloop?schema=public"
+  url      = "postgresql://postgres:BloopDB32002@db.ffnzqlxvciqxixfqwicp.supabase.co:5432/postgres"
+  // url      = "postgresql://bloopAdmin:32002@localhost:5432/bloop?schema=public"
   // ||env("DATABASE_URL")
 }
 
