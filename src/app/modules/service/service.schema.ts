@@ -3,14 +3,13 @@ import z from "zod";
 export const CreateServiceSchema = z.object({
   body: z.object({
     title: z.string(),
-    price: z.number(),
+    price: z.string(),
     orderType: z.string(),
     serviceArea: z.string().array(),
     details: z.string(),
     serviceGuarantee: z.string(),
     serviceTypeId: z.string(),
-    serviceItem: z.string().array(),
-    inServicePackage: z.string().array(),
+    serviceItem: z.string().array()
   }),
 });
 export const UpdateServiceSchema = z.object({

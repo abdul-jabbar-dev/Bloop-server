@@ -4,8 +4,11 @@ import catchAsync from "../../../shared/catchAsync";
 import ServiceService from "./service.service";
 import { UploadApiResponse } from "cloudinary";
 import ImgUpload from "../../../shared/uploads/imgUpload";
+import pick from "../../../shared/pick";
+import { serviceFilterableFields } from "./service.constants";
 
 const createService = catchAsync(async (req, res) => {
+  req.body.price = Number(req.body.price);
   const thumbnail = req.file;
   let uploadedImage: UploadApiResponse | null = null;
 
@@ -19,14 +22,14 @@ const createService = catchAsync(async (req, res) => {
   const service: Service = req.body;
   const result = await ServiceService.createServiceDb(service, uploadedImage);
   sendResponse(res, {
-    message: "Service create successfully",
     data: result,
   });
 });
 const getService = catchAsync(async (req, res) => {
-  const result = await ServiceService.getServiceDb();
+  const filters = pick(req.query, serviceFilterableFields);
+  const options = pick(req.query, ["limit", "page", "sortBy", "sortOrder"]);
+  const result = await ServiceService.getServiceDb(filters, options);
   sendResponse(res, {
-    message: "Service retrieve successfully",
     data: result,
   });
 });
@@ -34,7 +37,6 @@ const getAService = catchAsync(async (req, res) => {
   const { serviceTypeId } = req.params;
   const result = await ServiceService.getAServiceDb(serviceTypeId);
   sendResponse(res, {
-    message: "Service retrieve successfully",
     data: result,
   });
 });
@@ -54,7 +56,6 @@ const updateService = catchAsync(async (req, res) => {
     uploadedImage
   );
   sendResponse(res, {
-    message: "Service update successfully",
     data: result,
   });
 });
@@ -66,7 +67,6 @@ const updateServiceStatus = catchAsync(async (req, res) => {
     status
   );
   sendResponse(res, {
-    message: "Service status update successfully",
     data: result,
   });
 });
@@ -74,7 +74,6 @@ const deleteService = catchAsync(async (req, res) => {
   const { serviceTypeId } = req.params;
   const result = await ServiceService.deleteServiceDb(serviceTypeId);
   sendResponse(res, {
-    message: "Service delete successfully",
     data: result,
   });
 });

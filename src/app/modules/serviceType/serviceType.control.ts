@@ -6,24 +6,21 @@ import ServiceTypeService from "./serviceType.service";
 const createServiceType = catchAsync(async (req, res) => {
   const serviceType: ServiceType = req.body;
   const result = await ServiceTypeService.createServiceTypeDb(serviceType);
-  sendResponse(res, {
-    message: "Create service type successfully",
+  sendResponse(res, { 
     data: result,
   });
 });
 
 const getServiceType = catchAsync(async (req, res) => {
   const result = await ServiceTypeService.getServiceTypeDb();
-  sendResponse(res, {
-    message: "Service type retrieve successfully",
+  sendResponse(res, { 
     data: result,
   });
 });
 const getAServiceType = catchAsync(async (req, res) => {
   const { serviceTypeId } =  req.params;
   const result = await ServiceTypeService.getAServiceTypeDb(serviceTypeId);
-  sendResponse(res, {
-    message: "Service type retrieve successfully",
+  sendResponse(res, { 
     data: result,
   });
 });
@@ -35,8 +32,7 @@ const updateServiceType = catchAsync(async (req, res) => {
     serviceTypeId,
     title
   );
-  sendResponse(res, {
-    message: "Service type update successfully",
+  sendResponse(res, { 
     data: result,
   });
 });
@@ -44,8 +40,7 @@ const updateServiceType = catchAsync(async (req, res) => {
 const deleteServiceType = catchAsync(async (req, res) => {
   const { serviceTypeId } = req.params;
   const result = await ServiceTypeService.deleteServiceTypeDb(serviceTypeId);
-  sendResponse(res, {
-    message: "Service type delete successfully",
+  sendResponse(res, { 
     data: result,
   });
 });

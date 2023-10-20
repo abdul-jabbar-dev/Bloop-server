@@ -17,12 +17,12 @@ export default function prismaClientKnownRequestError(
     statusCode: 400,
   };
   if (err.code === "P2002") {
-    error.message = (err.message).trim();
+    error.message = (err?.message)?.trim();
     error.path = {
-      path: ((err.meta as any)?.target).join("/ "),
+      path: ((err?.meta as any)?.target)?.join("/ "),
       message:
         "Unique constraint failed on the fields: " +
-        ((err.meta as any)?.target).join("/ "),
+        ((err?.meta as any)?.target)?.join("/ "),
     };
   }
   return error;

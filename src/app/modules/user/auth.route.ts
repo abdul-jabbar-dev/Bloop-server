@@ -8,6 +8,8 @@ import UserController from "./user.control";
 
 const AuthRoute = Router();
 
+AuthRoute.post("/create-by-provider", UserController.createUserByProvider);
+
 AuthRoute.post(
   "/create-subscriber",
   validateRequest(CreateUserSchema),

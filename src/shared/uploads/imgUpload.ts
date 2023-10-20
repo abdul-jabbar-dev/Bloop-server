@@ -18,6 +18,7 @@ const ImgUpload = async (
     throw new Error("Image upload failed");
   } else {
     fs.unlink(imgPath, (err) => console.log(err));
+
     return upload;
   }
 };

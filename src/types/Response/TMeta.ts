@@ -1,7 +1,6 @@
-type TMeta = {
-  total: number;
-  totalInPage: number;
-  page: number;
-
-};
+type TMeta= {
+    page: number;
+    limit: number;
+    total: number;
+  };
 export default TMeta

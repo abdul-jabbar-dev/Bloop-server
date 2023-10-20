@@ -17,8 +17,7 @@ const createShippingAddress = catchAsync(async (req, res) => {
     shippingAddressData,
     user
   );
-  sendResponse(res, {
-    message: "Create Shipping Address successfully",
+  sendResponse(res, { 
     data: result,
   });
 });
@@ -28,8 +27,7 @@ const getShippingAddress = catchAsync(async (req, res) => {
     throw new Error("Invalid Subscriber");
   }
   const result = await ShippingAddressService.getShippingAddressDb(user);
-  sendResponse(res, {
-    message: "Shipping Address retrieve successfully",
+  sendResponse(res, { 
     data: result,
   });
 });
@@ -43,8 +41,7 @@ const getAShippingAddress = catchAsync(async (req, res) => {
     shippingAddressId,
     user
   );
-  sendResponse(res, {
-    message: "Shipping Address retrieve successfully",
+  sendResponse(res, { 
     data: result,
   });
 });
@@ -59,8 +56,7 @@ const deleteShippingAddress = catchAsync(async (req, res) => {
     shippingAddressId,
     user
   );
-  sendResponse(res, {
-    message: "Shipping Address delete successfully",
+  sendResponse(res, { 
     data: result,
   });
 });
@@ -72,8 +68,7 @@ const updateShippingAddress = catchAsync(async (req, res) => {
     shippingAddressId,
     data
   );
-  sendResponse(res, {
-    message: "Shipping Address update successfully",
+  sendResponse(res, { 
     data: result,
   });
 });

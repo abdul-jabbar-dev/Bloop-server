@@ -7,9 +7,8 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = "postgresql://postgres:BloopDB32002@db.ffnzqlxvciqxixfqwicp.supabase.co:5432/postgres"
-  // url      = "postgresql://bloopAdmin:32002@localhost:5432/bloop?schema=public"
-  // ||env("DATABASE_URL")
+  // url      = "postgresql://postgres:BloopDB32002@db.ffnzqlxvciqxixfqwicp.supabase.co:5432/postgres"
+  url      = env("DATABASE_URL")
 }
 
 enum Gender {
@@ -28,13 +27,15 @@ enum Status {
   active
   deactive
   pending
+  booked
+  finish
 }
 
 model User {
   id           String      @id @default(uuid())
   firstName    String
   lastName     String
-  email        String      @unique()
+  email        String?     @unique()
   profileImage String?     @unique
   image        Media?      @relation(fields: [profileImage], references: [id])
   address      String?
@@ -45,9 +46,12 @@ model User {
   bloodGroup   String?
   credential   Credential?
   status       Status
-  subscriber   Subscriber?
+  providerUid  String?     @unique
   createdAt    DateTime    @default(now())
   updatedAt    DateTime    @updatedAt
+
+  subscriber      Subscriber?
+  serviceProvider ServiceProvider?
 
   @@map("user")
 }
@@ -56,8 +60,8 @@ model Credential {
   id           String   @id @default(uuid())
   userId       String   @unique
   role         Role
-  email        String   @unique()
-  password     String
+  email        String?  @unique()
+  password     String?
   accessToken  String?
   refreshToken String?
   user         User     @relation(fields: [userId], references: [id])
@@ -65,16 +69,6 @@ model Credential {
   updatedAt    DateTime @updatedAt
 
   @@map("credential")
-}
-
-model ServiceType {
-  id        String    @id @default(uuid())
-  title     String    @unique
-  Service   Service[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-
-  @@map("serviceType")
 }
 
 model Service {
@@ -87,12 +81,10 @@ model Service {
   serviceGuarantee String
   status           Status
   serviceItem      String[]
-  inServicePackage String[]
 
-  thumbnail String @unique()
-  image     Media? @relation(fields: [thumbnail], references: [id])
-
-  serviceTypeId String      @unique()
+  thumbnail     String      @unique
+  image         Media       @relation(fields: [thumbnail], references: [id])
+  serviceTypeId String
   service       ServiceType @relation(fields: [serviceTypeId], references: [id])
 
   serviceProvider ServiceProvider[]
@@ -106,13 +98,28 @@ model Service {
   @@map("service")
 }
 
-model ServiceProvider {
-  id String @id @default(uuid())
+model ServiceType {
+  id                 String            @id @default(uuid())
+  title              String            @unique
+  
+  service            Service[]
+  serviceProvider    ServiceProvider[]
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt 
 
+  @@map("serviceType")
+}
+
+model ServiceProvider {
+  id        String  @id @default(uuid())
+  user      User    @relation(fields: [userId], references: [id])
+  userId    String  @unique
   serviceId String
   service   Service @relation(fields: [serviceId], references: [id])
 
-  bookedDate    String
+  serviceTypeId String      @unique
+  serviceType   ServiceType @relation(fields: [serviceTypeId], references: [id])
+
   availability  Boolean
   status        Status
   feedback      Feedback[]

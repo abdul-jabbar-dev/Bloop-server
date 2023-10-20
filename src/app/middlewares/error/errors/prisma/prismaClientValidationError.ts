@@ -9,18 +9,18 @@ export default function prismaClientValidationError(
       name: "Argument is missing",
       path: {
         path: err.message
-          .split("Argument")[1]
-          .split("` ")[0]
-          .replace(" `", "")
-          .trim(),
-        message: err.message.split("})")[1].trim(),
+         ?.split("Argument")[1]
+         ?.split("` ")[0]
+         ?.replace(" `", "")
+         ?.trim(),
+        message: err?.message?.split("})")[1]?.trim(),
       },
       message:
         err.message
-          .split("Argument")[1]
-          .split("` ")[0]
-          .replace(" `", "")
-          .trim() + " argument is missing",
+          ?.split("Argument")[1]
+          ?.split("` ")[0]
+          ?.replace(" `", "")
+          ?.trim() + " argument is missing",
       statusCode: 400,
     };
     return error;
@@ -30,11 +30,11 @@ export default function prismaClientValidationError(
       path: {
         path: err.message.split("Argument")[1].split("` ")[0].split("`")[1],
         message: err.message
-          .split("})")[1]
-          .split(" Invalid value provided. ")[1]
-          .trim(),
+          ?.split("})")[1]
+          ?.split(" Invalid value provided. ")[1]
+          ?.trim(),
       },
-      message: err.message.split("})")[1].trim(),
+      message: err?.message?.split("})")[1]?.trim(),
       statusCode: 400,
     };
     return error;

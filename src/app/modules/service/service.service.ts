@@ -1,7 +1,11 @@
-import { Media, Service, Status } from "@prisma/client";
+import { Media, Prisma, Service, Status } from "@prisma/client";
 import DB from "../../../db/prismaClient";
 import { UploadApiResponse } from "cloudinary";
 import { ImgDelete } from "../../../shared/uploads/imgUpload";
+import { IPaginationOptions } from "../../../types/pagination";
+import { paginationHelpers } from "../../../shared/paginationHelpers";
+import { serviceSearchableFields } from "./service.constants";
+import TResponse from "../../../types/Response/TResponse";
 
 const createServiceDb = async (
   service: Service,
@@ -49,9 +53,59 @@ const createServiceDb = async (
   }
 };
 
-const getServiceDb = async (): Promise<Service[]> => {
-  const res: Service[] = await DB.service.findMany();
-  return res;
+const getServiceDb = async (
+  filters: { searchTerm?: string | undefined },
+  options: IPaginationOptions
+): Promise<TResponse<Service[]>> => {
+  const { limit, page, skip } = paginationHelpers.calculatePagination(options);
+  const { searchTerm, ...filterData } = filters;
+  const andConditions = [];
+
+  if (searchTerm) {
+    andConditions.push({
+      OR: serviceSearchableFields.map((field) => ({
+        [field]: {
+          contains: searchTerm,
+          mode: "insensitive",
+        },
+      })),
+    });
+  }
+  if (Object.keys(filterData).length > 0) {
+    andConditions.push({
+      AND: Object.keys(filterData).map((key) => ({
+        [key]: {
+          equals: (filterData as any)[key],
+        },
+      })),
+    });
+  }
+  const whereConditions: Prisma.ServiceWhereInput =
+    andConditions.length > 0
+      ? { AND: andConditions as Prisma.ServiceWhereInput }
+      : {};
+  const result = await DB.service.findMany({
+    where: whereConditions,
+    skip,
+    take: limit,
+    orderBy:
+      options.sortBy && options.sortOrder
+        ? { [options.sortBy]: options.sortOrder }
+        : {
+            createdAt: "desc",
+          },
+  });
+  const total = await DB.service.count({
+    where: whereConditions,
+  });
+  return {
+    meta: {
+      total,
+      page,
+      limit,
+    },
+    data: result,
+  };
 };
 
 const getAServiceDb = async (id: string): Promise<Service> => {

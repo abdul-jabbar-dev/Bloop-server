@@ -3,16 +3,15 @@ import TError from "../../../../../types/error/Error";
 
 export default function zodValidator(err: ZodError): TError {
   const error: TError = {
-    message: (err.issues[0].path[1] as string) + " is " + err.issues[0].message,
-    name: err.name,
+    message: (err?.issues[0]?.path[1] as string) + " is " + err?.issues[0].message,
+    name: err?.name,
     statusCode: 400,
     path: {
-      path: err.issues.map((er) => er.path.join("/")).join(", "),
+      path: err.issues?.map((er) => er?.path.join("/"))?.join(", "),
       message: JSON.stringify(
-        err.issues.map((er) => (er.path.join("/") + " is " + er.message).trim())
+        err.issues?.map((er) => (er?.path.join("/") + " is " + er.message)?.trim())
       ),
     },
-  };
-  console.log(err);
+  }; 
   return error;
 }

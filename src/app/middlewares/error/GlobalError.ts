@@ -21,10 +21,10 @@ const GlobalError: ErrorRequestHandler = (
   );
 
   let error: TError = {
-    name: err.name,
-    message: err.message,
+    name: err?.name,
+    message: err?.message,
     statusCode: 400,
-    path: { path: err.message, message: "" },
+    path: { path: err?.message, message: "" },
   };
 
   if (err instanceof PrismaClientValidationError) {
@@ -34,6 +34,6 @@ const GlobalError: ErrorRequestHandler = (
   } else if (err instanceof ZodError) {
     error = zodValidator(err);
   }
-  res.send(error);
+  res .status(error.statusCode).json(error);
 };
 export default GlobalError;

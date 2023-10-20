@@ -1,20 +1,67 @@
-import { Credential } from "@prisma/client";
+import { Credential, User } from "@prisma/client";
 import sendResponse from "../../../shared/Response/sendResponse";
 import catchAsync from "../../../shared/catchAsync";
 import { CreateUser, LoginUser } from "../../../types/user/user";
 import UserService from "./user.service";
 import ImgUpload from "../../../shared/uploads/imgUpload";
 
-import { UploadApiResponse } from "cloudinary"; 
+import { UploadApiResponse } from "cloudinary";
+import DB from "../../../db/prismaClient";
+import pick from "../../../shared/pick";
+import { userFilterableFields } from "./user.constants";
 //Auth route
+const createUserByProvider = catchAsync(async (req, res) => {
+  const user: User = req.body;
+  if (user.email) {
+    user["status"] = "active";
+  }else{
+    user["status"] = "deactive";
+  }
+  user["role"] = "subscriber";
+  if (user.providerUid) {
+    const isExist = await DB.user.findUnique({
+      where: { providerUid: user.providerUid },
+      include: {
+        image: true, 
+        subscriber: true,
+        credential: { select: { accessToken: true, refreshToken: true } },
+      },
+    }); 
+    if (isExist) {
+      sendResponse(res, {
+        data: isExist,
+      });
+    } else {
+      let uploadedImage: UploadApiResponse | null = null;
+      if (!user) {
+        throw new Error("User required!");
+      }
+      if (user.profileImage) {
+        uploadedImage = await ImgUpload(user.profileImage, {
+          folder: "bloop",
+        });
+        user.profileImage = null;
+      }
+
+      const result = await UserService.createUserByProviderDb(
+        user,
+        uploadedImage
+      );
+      sendResponse(res, {
+        data: result,
+      });
+    }
+  }
+});
+
 const createUser = catchAsync(async (req, res) => {
+  console.log(req.body);
   const user: CreateUser = req.body;
   user["status"] = "active";
   user["role"] = "subscriber";
   const result = await UserService.createUserDb(user);
 
   sendResponse(res, {
-    message: "Successfully create an account",
     data: {
       accessToken: result.accessToken,
       email: result.email,
@@ -29,7 +76,6 @@ const loginUser = catchAsync(async (req, res) => {
   res.cookie("refreshToken", result.refreshToken);
   res.setHeader("Authorization", result.accessToken as string);
   sendResponse(res, {
-    message: "Login Successfully",
     data: {
       accessToken: result.accessToken,
       email: result.email,
@@ -45,7 +91,6 @@ const resetPassword = catchAsync(async (req, res) => {
   };
   const result = await UserService.resetPassword(resetPasswordConfig);
   sendResponse(res, {
-    message: "Password reset Successfully",
     data: {
       email: result.email,
       id: result.id,
@@ -55,10 +100,11 @@ const resetPassword = catchAsync(async (req, res) => {
 
 // user route
 const getUsers = catchAsync(async (req, res) => {
-  const result = await UserService.getUsersDb();
+  const filters = pick(req.query, userFilterableFields);
+  const options = pick(req.query, ["limit", "page", "sortBy", "sortOrder"]);
+  const result = await UserService.getUsersDb(undefined, filters, options);
   res.send(result);
 });
-
 const getMyProfile = catchAsync(async (req, res) => {
   const user = req.user;
   if (!user) {
@@ -66,7 +112,22 @@ const getMyProfile = catchAsync(async (req, res) => {
   }
   const result = await UserService.getMyProfileDb(user);
   sendResponse(res, {
-    message: "My profile fetched Successfully",
+    data: result,
+  });
+});
+const getSubscriber = catchAsync(async (req, res) => {
+  const filters = pick(req.query, userFilterableFields);
+  const options = pick(req.query, ["limit", "page", "sortBy", "sortOrder"]);
+  const result = await UserService.getUsersDb('subscriber', filters, options);
+  sendResponse(res, {
+    data: result,
+  });
+});
+const getServiceProvider = catchAsync(async (req, res) => {
+  const filters = pick(req.query, userFilterableFields);
+  const options = pick(req.query, ["limit", "page", "sortBy", "sortOrder"]);
+  const result = await UserService.getUsersDb('serviceProvider', filters, options);
+  sendResponse(res, {
     data: result,
   });
 });
@@ -85,17 +146,19 @@ const updateUser = catchAsync(async (req, res) => {
   }
   const result = await UserService.updateUserDb(user, req.body, uploadedImage);
   sendResponse(res, {
-    message: "Profile update Successfully",
     data: result,
   });
 });
 
 const UserController = {
   createUser,
+  getSubscriber,
+  createUserByProvider,
   getMyProfile,
   getUsers,
   updateUser,
   loginUser,
+  getServiceProvider,
   resetPassword,
 };
 export default UserController;
