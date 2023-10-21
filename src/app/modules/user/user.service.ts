@@ -134,6 +134,7 @@ const createUserByProviderDb = async (
             created_at: image.created_at,
           },
         });
+
         await asyncDB.user.update({
           where: { id: res.id },
           data: { profileImage: newImg.id },
@@ -155,7 +156,7 @@ const createUserByProviderDb = async (
             { expiresIn: config.refreshToken.validate }
           ),
         },
-      });
+      }); 
       if (!createCredin) {
         throw new Error("Invalid Parameter");
       }
@@ -171,6 +172,7 @@ const createUserByProviderDb = async (
       return post;
     }
   } catch (error) {
+
     if (image) {
       ImgDelete(image.public_id);
     }

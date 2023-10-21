@@ -86,6 +86,13 @@ const getServiceDb = async (
       : {};
   const result = await DB.service.findMany({
     where: whereConditions,
+    include: {
+      feedback: true,
+      image: true,
+      service: true,
+      servicePlaced: true,
+      serviceProvider: true,
+    },
     skip,
     take: limit,
     orderBy:

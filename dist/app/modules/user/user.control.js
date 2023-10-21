@@ -63,7 +63,7 @@ const resetPassword = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, 
 // user route
 const getUsers = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const result = yield user_service_1.default.getUsersDb();
-    res.send(result);
+    (result);
 }));
 const getMyProfile = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const user = req.user;

@@ -30,7 +30,8 @@ const getService = catchAsync(async (req, res) => {
   const options = pick(req.query, ["limit", "page", "sortBy", "sortOrder"]);
   const result = await ServiceService.getServiceDb(filters, options);
   sendResponse(res, {
-    data: result,
+    data: result.data,
+    meta: result.meta,
   });
 });
 const getAService = catchAsync(async (req, res) => {

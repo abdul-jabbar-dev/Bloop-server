@@ -14,7 +14,7 @@ const createUserByProvider = catchAsync(async (req, res) => {
   const user: User = req.body;
   if (user.email) {
     user["status"] = "active";
-  }else{
+  } else {
     user["status"] = "deactive";
   }
   user["role"] = "subscriber";
@@ -22,11 +22,12 @@ const createUserByProvider = catchAsync(async (req, res) => {
     const isExist = await DB.user.findUnique({
       where: { providerUid: user.providerUid },
       include: {
-        image: true, 
+        image: true,
         subscriber: true,
         credential: { select: { accessToken: true, refreshToken: true } },
       },
-    }); 
+    });
+
     if (isExist) {
       sendResponse(res, {
         data: isExist,
@@ -47,6 +48,7 @@ const createUserByProvider = catchAsync(async (req, res) => {
         user,
         uploadedImage
       );
+      console.log(result);
       sendResponse(res, {
         data: result,
       });
@@ -55,7 +57,8 @@ const createUserByProvider = catchAsync(async (req, res) => {
 });
 
 const createUser = catchAsync(async (req, res) => {
-  console.log(req.body);
+ 
+  
   const user: CreateUser = req.body;
   user["status"] = "active";
   user["role"] = "subscriber";
@@ -103,7 +106,7 @@ const getUsers = catchAsync(async (req, res) => {
   const filters = pick(req.query, userFilterableFields);
   const options = pick(req.query, ["limit", "page", "sortBy", "sortOrder"]);
   const result = await UserService.getUsersDb(undefined, filters, options);
-  res.send(result);
+  sendResponse(res, { data: result });
 });
 const getMyProfile = catchAsync(async (req, res) => {
   const user = req.user;
@@ -118,7 +121,7 @@ const getMyProfile = catchAsync(async (req, res) => {
 const getSubscriber = catchAsync(async (req, res) => {
   const filters = pick(req.query, userFilterableFields);
   const options = pick(req.query, ["limit", "page", "sortBy", "sortOrder"]);
-  const result = await UserService.getUsersDb('subscriber', filters, options);
+  const result = await UserService.getUsersDb("subscriber", filters, options);
   sendResponse(res, {
     data: result,
   });
@@ -126,7 +129,11 @@ const getSubscriber = catchAsync(async (req, res) => {
 const getServiceProvider = catchAsync(async (req, res) => {
   const filters = pick(req.query, userFilterableFields);
   const options = pick(req.query, ["limit", "page", "sortBy", "sortOrder"]);
-  const result = await UserService.getUsersDb('serviceProvider', filters, options);
+  const result = await UserService.getUsersDb(
+    "serviceProvider",
+    filters,
+    options
+  );
   sendResponse(res, {
     data: result,
   });

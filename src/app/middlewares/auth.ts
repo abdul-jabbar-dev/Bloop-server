@@ -9,6 +9,7 @@ const Auth =
     try {
       const token = req?.headers?.authorization;
       if (!token) {
+        console.log(req.route)
         next(new Error("Token required"));
         return;
       }
