@@ -16,14 +16,58 @@ const sendResponse_1 = __importDefault(require("../../../shared/Response/sendRes
 const catchAsync_1 = __importDefault(require("../../../shared/catchAsync"));
 const user_service_1 = __importDefault(require("./user.service"));
 const imgUpload_1 = __importDefault(require("../../../shared/uploads/imgUpload"));
+const prismaClient_1 = __importDefault(require("../../../db/prismaClient"));
+const pick_1 = __importDefault(require("../../../shared/pick"));
+const user_constants_1 = require("./user.constants");
 //Auth route
+const createUserByProvider = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const user = req.body;
+    if (user.email) {
+        user["status"] = "active";
+    }
+    else {
+        user["status"] = "deactive";
+    }
+    user["role"] = "subscriber";
+    if (user.providerUid) {
+        const isExist = yield prismaClient_1.default.user.findUnique({
+            where: { providerUid: user.providerUid },
+            include: {
+                image: true,
+                subscriber: true,
+                credential: { select: { accessToken: true, refreshToken: true } },
+            },
+        });
+        if (isExist) {
+            (0, sendResponse_1.default)(res, {
+                data: isExist,
+            });
+        }
+        else {
+            let uploadedImage = null;
+            if (!user) {
+                throw new Error("User required!");
+            }
+            if (user.profileImage) {
+                uploadedImage = yield (0, imgUpload_1.default)(user.profileImage, {
+                    folder: "bloop",
+                });
+                user.profileImage = null;
+            }
+            const result = yield user_service_1.default.createUserByProviderDb(user, uploadedImage);
+            console.log(result);
+            (0, sendResponse_1.default)(res, {
+                data: result,
+            });
+        }
+    }
+}));
 const createUser = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const user = req.body;
     user["status"] = "active";
     user["role"] = "subscriber";
     const result = yield user_service_1.default.createUserDb(user);
     (0, sendResponse_1.default)(res, {
-        message: "Successfully create an account",
         data: {
             accessToken: result.accessToken,
             email: result.email,
@@ -37,7 +81,6 @@ const loginUser = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void
     res.cookie("refreshToken", result.refreshToken);
     res.setHeader("Authorization", result.accessToken);
     (0, sendResponse_1.default)(res, {
-        message: "Login Successfully",
         data: {
             accessToken: result.accessToken,
             email: result.email,
@@ -53,7 +96,6 @@ const resetPassword = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, 
     };
     const result = yield user_service_1.default.resetPassword(resetPasswordConfig);
     (0, sendResponse_1.default)(res, {
-        message: "Password reset Successfully",
         data: {
             email: result.email,
             id: result.id,
@@ -62,8 +104,10 @@ const resetPassword = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, 
 }));
 // user route
 const getUsers = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield user_service_1.default.getUsersDb();
-    (result);
+    const filters = (0, pick_1.default)(req.query, user_constants_1.userFilterableFields);
+    const options = (0, pick_1.default)(req.query, ["limit", "page", "sortBy", "sortOrder"]);
+    const result = yield user_service_1.default.getUsersDb(undefined, filters, options);
+    (0, sendResponse_1.default)(res, { data: result });
 }));
 const getMyProfile = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const user = req.user;
@@ -72,7 +116,22 @@ const getMyProfile = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, v
     }
     const result = yield user_service_1.default.getMyProfileDb(user);
     (0, sendResponse_1.default)(res, {
-        message: "My profile fetched Successfully",
+        data: result,
+    });
+}));
+const getSubscriber = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const filters = (0, pick_1.default)(req.query, user_constants_1.userFilterableFields);
+    const options = (0, pick_1.default)(req.query, ["limit", "page", "sortBy", "sortOrder"]);
+    const result = yield user_service_1.default.getUsersDb("subscriber", filters, options);
+    (0, sendResponse_1.default)(res, {
+        data: result,
+    });
+}));
+const getServiceProvider = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const filters = (0, pick_1.default)(req.query, user_constants_1.userFilterableFields);
+    const options = (0, pick_1.default)(req.query, ["limit", "page", "sortBy", "sortOrder"]);
+    const result = yield user_service_1.default.getUsersDb("serviceProvider", filters, options);
+    (0, sendResponse_1.default)(res, {
         data: result,
     });
 }));
@@ -90,16 +149,18 @@ const updateUser = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, voi
     }
     const result = yield user_service_1.default.updateUserDb(user, req.body, uploadedImage);
     (0, sendResponse_1.default)(res, {
-        message: "Profile update Successfully",
         data: result,
     });
 }));
 const UserController = {
     createUser,
+    getSubscriber,
+    createUserByProvider,
     getMyProfile,
     getUsers,
     updateUser,
     loginUser,
+    getServiceProvider,
     resetPassword,
 };
 exports.default = UserController;

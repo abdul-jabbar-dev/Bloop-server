@@ -20,6 +20,7 @@ const Auth = (role) => (req, res, next) => __awaiter(void 0, void 0, void 0, fun
     try {
         const token = (_a = req === null || req === void 0 ? void 0 : req.headers) === null || _a === void 0 ? void 0 : _a.authorization;
         if (!token) {
+            console.log(req.route);
             next(new Error("Token required"));
             return;
         }
@@ -27,7 +28,6 @@ const Auth = (role) => (req, res, next) => __awaiter(void 0, void 0, void 0, fun
         if (typeof decoded === "string") {
             throw new Error("Invalid token");
         }
-        console.log("Login: ", decoded.role);
         const isExistUser = yield prismaClient_1.default.user.findUnique({
             where: { id: decoded.id },
         });

@@ -27,7 +27,6 @@ const createShippingAddress = (0, catchAsync_1.default)((req, res) => __awaiter(
     const shippingAddressData = req.body;
     const result = yield shippingAddress_service_1.default.createShippingAddressDb(shippingAddressData, user);
     (0, sendResponse_1.default)(res, {
-        message: "Create Shipping Address successfully",
         data: result,
     });
 }));
@@ -38,7 +37,6 @@ const getShippingAddress = (0, catchAsync_1.default)((req, res) => __awaiter(voi
     }
     const result = yield shippingAddress_service_1.default.getShippingAddressDb(user);
     (0, sendResponse_1.default)(res, {
-        message: "Shipping Address retrieve successfully",
         data: result,
     });
 }));
@@ -50,7 +48,6 @@ const getAShippingAddress = (0, catchAsync_1.default)((req, res) => __awaiter(vo
     }
     const result = yield shippingAddress_service_1.default.getAShippingAddressDb(shippingAddressId, user);
     (0, sendResponse_1.default)(res, {
-        message: "Shipping Address retrieve successfully",
         data: result,
     });
 }));
@@ -62,7 +59,6 @@ const deleteShippingAddress = (0, catchAsync_1.default)((req, res) => __awaiter(
     }
     const result = yield shippingAddress_service_1.default.deleteShippingAddressDb(shippingAddressId, user);
     (0, sendResponse_1.default)(res, {
-        message: "Shipping Address delete successfully",
         data: result,
     });
 }));
@@ -71,7 +67,6 @@ const updateShippingAddress = (0, catchAsync_1.default)((req, res) => __awaiter(
     const data = req.body;
     const result = yield shippingAddress_service_1.default.updateShippingAddressDb(shippingAddressId, data);
     (0, sendResponse_1.default)(res, {
-        message: "Shipping Address update successfully",
         data: result,
     });
 }));

@@ -11,10 +11,10 @@ const zodValidator_1 = __importDefault(require("./errors/zod/zodValidator"));
 const GlobalError = (err, req, res, next) => {
     console.log(err, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>global>>>>>>>>>>>>>>>>>>>>>>>>>>>");
     let error = {
-        name: err.name,
-        message: err.message,
+        name: err === null || err === void 0 ? void 0 : err.name,
+        message: err === null || err === void 0 ? void 0 : err.message,
         statusCode: 400,
-        path: { path: err.message, message: "" },
+        path: { path: err === null || err === void 0 ? void 0 : err.message, message: "" },
     };
     if (err instanceof library_1.PrismaClientValidationError) {
         error = (0, prismaClientValidationError_1.default)(err);
@@ -25,6 +25,6 @@ const GlobalError = (err, req, res, next) => {
     else if (err instanceof zod_1.ZodError) {
         error = (0, zodValidator_1.default)(err);
     }
-    res.send(error);
+    res.status(error.statusCode).json(error);
 };
 exports.default = GlobalError;

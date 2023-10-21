@@ -16,7 +16,10 @@ const sendResponse_1 = __importDefault(require("../../../shared/Response/sendRes
 const catchAsync_1 = __importDefault(require("../../../shared/catchAsync"));
 const service_service_1 = __importDefault(require("./service.service"));
 const imgUpload_1 = __importDefault(require("../../../shared/uploads/imgUpload"));
+const pick_1 = __importDefault(require("../../../shared/pick"));
+const service_constants_1 = require("./service.constants");
 const createService = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    req.body.price = Number(req.body.price);
     const thumbnail = req.file;
     let uploadedImage = null;
     if (!thumbnail) {
@@ -28,22 +31,22 @@ const createService = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, 
     const service = req.body;
     const result = yield service_service_1.default.createServiceDb(service, uploadedImage);
     (0, sendResponse_1.default)(res, {
-        message: "Service create successfully",
         data: result,
     });
 }));
 const getService = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
-    const result = yield service_service_1.default.getServiceDb();
+    const filters = (0, pick_1.default)(req.query, service_constants_1.serviceFilterableFields);
+    const options = (0, pick_1.default)(req.query, ["limit", "page", "sortBy", "sortOrder"]);
+    const result = yield service_service_1.default.getServiceDb(filters, options);
     (0, sendResponse_1.default)(res, {
-        message: "Service retrieve successfully",
-        data: result,
+        data: result.data,
+        meta: result.meta,
     });
 }));
 const getAService = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { serviceTypeId } = req.params;
     const result = yield service_service_1.default.getAServiceDb(serviceTypeId);
     (0, sendResponse_1.default)(res, {
-        message: "Service retrieve successfully",
         data: result,
     });
 }));
@@ -59,7 +62,6 @@ const updateService = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, 
     }
     const result = yield service_service_1.default.updateServiceDb(serviceTypeId, data, uploadedImage);
     (0, sendResponse_1.default)(res, {
-        message: "Service update successfully",
         data: result,
     });
 }));
@@ -68,7 +70,6 @@ const updateServiceStatus = (0, catchAsync_1.default)((req, res) => __awaiter(vo
     const { status } = req.body;
     const result = yield service_service_1.default.updateServiceStatusDb(serviceTypeId, status);
     (0, sendResponse_1.default)(res, {
-        message: "Service status update successfully",
         data: result,
     });
 }));
@@ -76,7 +77,6 @@ const deleteService = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, 
     const { serviceTypeId } = req.params;
     const result = yield service_service_1.default.deleteServiceDb(serviceTypeId);
     (0, sendResponse_1.default)(res, {
-        message: "Service delete successfully",
         data: result,
     });
 }));

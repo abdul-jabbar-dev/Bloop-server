@@ -19,14 +19,12 @@ const createServiceType = (0, catchAsync_1.default)((req, res) => __awaiter(void
     const serviceType = req.body;
     const result = yield serviceType_service_1.default.createServiceTypeDb(serviceType);
     (0, sendResponse_1.default)(res, {
-        message: "Create service type successfully",
         data: result,
     });
 }));
 const getServiceType = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const result = yield serviceType_service_1.default.getServiceTypeDb();
     (0, sendResponse_1.default)(res, {
-        message: "Service type retrieve successfully",
         data: result,
     });
 }));
@@ -34,7 +32,6 @@ const getAServiceType = (0, catchAsync_1.default)((req, res) => __awaiter(void 0
     const { serviceTypeId } = req.params;
     const result = yield serviceType_service_1.default.getAServiceTypeDb(serviceTypeId);
     (0, sendResponse_1.default)(res, {
-        message: "Service type retrieve successfully",
         data: result,
     });
 }));
@@ -43,7 +40,6 @@ const updateServiceType = (0, catchAsync_1.default)((req, res) => __awaiter(void
     const { title } = req.body;
     const result = yield serviceType_service_1.default.updateServiceTypeDb(serviceTypeId, title);
     (0, sendResponse_1.default)(res, {
-        message: "Service type update successfully",
         data: result,
     });
 }));
@@ -51,7 +47,6 @@ const deleteServiceType = (0, catchAsync_1.default)((req, res) => __awaiter(void
     const { serviceTypeId } = req.params;
     const result = yield serviceType_service_1.default.deleteServiceTypeDb(serviceTypeId);
     (0, sendResponse_1.default)(res, {
-        message: "Service type delete successfully",
         data: result,
     });
 }));

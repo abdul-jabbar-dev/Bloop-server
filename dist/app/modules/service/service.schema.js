@@ -9,14 +9,13 @@ const zod_1 = __importDefault(require("zod"));
 exports.CreateServiceSchema = zod_1.default.object({
     body: zod_1.default.object({
         title: zod_1.default.string(),
-        price: zod_1.default.number(),
+        price: zod_1.default.string(),
         orderType: zod_1.default.string(),
         serviceArea: zod_1.default.string().array(),
         details: zod_1.default.string(),
         serviceGuarantee: zod_1.default.string(),
         serviceTypeId: zod_1.default.string(),
-        serviceItem: zod_1.default.string().array(),
-        inServicePackage: zod_1.default.string().array(),
+        serviceItem: zod_1.default.string().array()
     }),
 });
 exports.UpdateServiceSchema = zod_1.default.object({

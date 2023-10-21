@@ -31,6 +31,7 @@ const validateRequest_1 = __importDefault(require("../../middlewares/validateReq
 const user_schema_1 = __importStar(require("./user.schema"));
 const user_control_1 = __importDefault(require("./user.control"));
 const AuthRoute = (0, express_1.Router)();
+AuthRoute.post("/create-by-provider", user_control_1.default.createUserByProvider);
 AuthRoute.post("/create-subscriber", (0, validateRequest_1.default)(user_schema_1.default), user_control_1.default.createUser);
 AuthRoute.post("/login", (0, validateRequest_1.default)(user_schema_1.LoginUserSchema), user_control_1.default.loginUser);
 AuthRoute.post("/reset-password", (0, validateRequest_1.default)(user_schema_1.newPasswordSchema), user_control_1.default.resetPassword);

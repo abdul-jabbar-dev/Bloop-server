@@ -14,15 +14,18 @@ const CreateUserSchema = zod_1.default.object({
     }),
 });
 exports.UpdateProfileUserSchema = zod_1.default.object({
-    body: zod_1.default.object({
+    body: zod_1.default
+        .object({
         firstName: zod_1.default.string().optional(),
         lastName: zod_1.default.string().optional(),
         address: zod_1.default.string().optional(),
+        email: zod_1.default.string().optional(),
         contactNo: zod_1.default.string().optional(),
         gender: zod_1.default.enum(["male", "female"]).optional(),
         dateOfBirth: zod_1.default.string().optional(),
         bloodGroup: zod_1.default.string().optional(),
-    }).optional(),
+    })
+        .optional(),
 });
 exports.LoginUserSchema = zod_1.default.object({
     body: zod_1.default.object({
