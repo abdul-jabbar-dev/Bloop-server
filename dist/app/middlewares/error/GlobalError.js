@@ -25,6 +25,6 @@ const GlobalError = (err, req, res, next) => {
     else if (err instanceof zod_1.ZodError) {
         error = (0, zodValidator_1.default)(err);
     }
-    res.status(error.statusCode).json(error);
+    res.status(error.statusCode).send(error);
 };
 exports.default = GlobalError;

@@ -103,7 +103,6 @@ const getServiceDb = (filters, options) => __awaiter(void 0, void 0, void 0, fun
             image: true,
             service: true,
             servicePlaced: true,
-            serviceProvider: true,
         },
         skip,
         take: limit,

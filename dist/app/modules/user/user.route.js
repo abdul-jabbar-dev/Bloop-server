@@ -15,4 +15,5 @@ UserRoute.patch("/update-profile", (0, auth_1.default)(["admin", "serviceProvide
 UserRoute.get("/my-profile", (0, auth_1.default)(["admin", "serviceProvider", "subscriber", "super_admin"]), user_control_1.default.getMyProfile);
 UserRoute.get("/get-subscribers", (0, auth_1.default)(["admin", "super_admin"]), user_control_1.default.getSubscriber);
 UserRoute.get("/get-service-provider", (0, auth_1.default)(["admin", "super_admin"]), user_control_1.default.getServiceProvider);
+UserRoute.post("/get-service-provider", (0, auth_1.default)(["admin", "super_admin"]), user_control_1.default.getServiceProvider);
 exports.default = UserRoute;

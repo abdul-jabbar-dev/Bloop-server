@@ -17,11 +17,11 @@ const Auth =
       if (typeof decoded === "string") {
         throw new Error("Invalid token");
       }
-
       const isExistUser = await DB.user.findUnique({
         where: { id: decoded.id },
       });
- 
+      
+      console.log(isExistUser);
       if (!isExistUser) {
         throw new Error("This user has no record found");
       }

@@ -91,7 +91,6 @@ const getServiceDb = async (
       image: true,
       service: true,
       servicePlaced: true,
-      serviceProvider: true,
     },
     skip,
     take: limit,

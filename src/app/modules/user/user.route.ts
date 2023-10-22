@@ -34,4 +34,10 @@ UserRoute.get(
   Auth(["admin","super_admin"]),
   UserController.getServiceProvider
 );
+
+UserRoute.post(
+  "/get-service-provider",
+  Auth(["admin","super_admin"]),
+  UserController.getServiceProvider
+);
 export default UserRoute;

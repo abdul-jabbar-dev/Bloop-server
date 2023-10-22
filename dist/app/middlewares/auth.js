@@ -31,6 +31,7 @@ const Auth = (role) => (req, res, next) => __awaiter(void 0, void 0, void 0, fun
         const isExistUser = yield prismaClient_1.default.user.findUnique({
             where: { id: decoded.id },
         });
+        console.log(isExistUser);
         if (!isExistUser) {
             throw new Error("This user has no record found");
         }

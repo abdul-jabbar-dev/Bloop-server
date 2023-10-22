@@ -34,6 +34,6 @@ const GlobalError: ErrorRequestHandler = (
   } else if (err instanceof ZodError) {
     error = zodValidator(err);
   }
-  res .status(error.statusCode).json(error);
+  res.status(error.statusCode).send(error);
 };
 export default GlobalError;
