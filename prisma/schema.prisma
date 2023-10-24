@@ -8,7 +8,8 @@ generator client {
 datasource db {
   provider = "postgresql"
   // url      = "postgresql://postgres:BloopDB32002@db.ffnzqlxvciqxixfqwicp.supabase.co:5432/postgres"
-  url      = env("DATABASE_URL")
+  // url      = "postgres://BloopAdmin3:BloopAdmin3@postgresql-151799-0.cloudclusters.net:19053/Bloop"
+   url      = env("DATABASE_URL")
 }
 
 enum Gender {
