@@ -1,4 +1,12 @@
-import { Credential, Media, Prisma, Role, Status, User } from "@prisma/client";
+import {
+  Credential,
+  Media,
+  Prisma,
+  Role,
+  ServiceProvider,
+  Status,
+  User,
+} from "@prisma/client";
 import DB from "../../../db/prismaClient";
 import B from "../../../shared/bcrypt";
 import { CreateUser, LoginUser } from "../../../types/user/user";
@@ -9,8 +17,13 @@ import { JwtPayload } from "jsonwebtoken";
 import { ImgDelete } from "../../../shared/uploads/imgUpload";
 import { IPaginationOptions } from "../../../types/pagination";
 import { paginationHelpers } from "../../../shared/paginationHelpers";
-import { userSearchableFields } from "./user.constants";
+import {
+  serviceProviderSearchableFields,
+  userSearchableFields,
+} from "./user.constants";
 import TResponse from "../../../types/Response/TResponse";
+import { CreateServiceProvider } from "../../../types/user/provider/serviceProvider";
+import generateProviderId from "../../../shared/utils/generateProviderId";
 //Auth
 const createUserDb = async (data: CreateUser): Promise<Credential> => {
   const { password, ...user } = data;
@@ -77,7 +90,26 @@ const loginUserDb = async ({
   if (!isMatch) {
     throw new Error("Invalid Password");
   }
-  return isExist;
+  const newLoginDetails = await DB.credential.update({
+    where: { id: isExist.id },
+    data: {
+      accessToken: JWT.generateToken(
+        { id: isExist.userId, role: isExist.role },
+        config.accessToken.secret,
+        { expiresIn: config.accessToken.validate }
+      ),
+      refreshToken: JWT.generateToken(
+        { id: isExist.userId, role: isExist.role },
+        config.refreshToken.secret,
+        { expiresIn: config.refreshToken.validate }
+      ),
+    },
+  });
+  console.log(newLoginDetails);
+  if (!newLoginDetails) {
+    throw new Error("Login failed");
+  }
+  return newLoginDetails;
 };
 const resetPassword = async (resetConfig: {
   oldPassword: string;
@@ -156,7 +188,7 @@ const createUserByProviderDb = async (
             { expiresIn: config.refreshToken.validate }
           ),
         },
-      }); 
+      });
       if (!createCredin) {
         throw new Error("Invalid Parameter");
       }
@@ -172,7 +204,6 @@ const createUserByProviderDb = async (
       return post;
     }
   } catch (error) {
-
     if (image) {
       ImgDelete(image.public_id);
     }
@@ -292,67 +323,132 @@ const getUsersDb = async (
 //   };
 // };
 
-// const getServiceProviderDb = async (
-//   filters: { searchTerm?: string | undefined },
-//   options: IPaginationOptions
-// ): Promise<TResponse<User[]>> => {
-//   const { limit, page, skip } = paginationHelpers.calculatePagination(options);
-//   const { searchTerm, ...filterData } = filters;
+const getServiceProviderDb = async (
+  filters: { searchTerm?: string | undefined },
+  options: IPaginationOptions
+): Promise<TResponse<ServiceProvider[]>> => {
+  const { limit, page, skip } = paginationHelpers.calculatePagination(options);
+  const { searchTerm, ...filterData } = filters;
 
-//   const andConditions = [];
+  const andConditions = [];
 
-//   if (searchTerm) {
-//     andConditions.push({
-//       OR: userSearchableFields.map((field) => ({
-//         [field]: {
-//           contains: searchTerm,
-//           mode: "insensitive",
-//         },
-//       })),
-//     });
-//   }
+  if (searchTerm) {
+    andConditions.push({
+      OR: serviceProviderSearchableFields.map((field) => ({
+        [field]: {
+          contains: searchTerm,
+          mode: "insensitive",
+        },
+      })),
+    });
+  }
 
-//   if (Object.keys(filterData).length > 0) {
-//     andConditions.push({
-//       AND: Object.keys(filterData).map((key) => ({
-//         [key]: {
-//           equals: (filterData as any)[key],
-//         },
-//       })),
-//     });
-//   }
+  if (Object.keys(filterData).length > 0) {
+    andConditions.push({
+      AND: Object.keys(filterData).map((key) => ({
+        [key]: {
+          equals: (filterData as any)[key],
+        },
+      })),
+    });
+  }
 
-//   const whereConditions: Prisma.UserWhereInput =
-//     andConditions.length > 0 ? { AND: andConditions } : {};
+  const whereConditions: Prisma.ServiceProviderWhereInput =
+    andConditions.length > 0 ? { AND: andConditions } : {};
 
-//   const result = await DB.user.findMany({
-//     where: { AND: [{ role: "serviceProvider" }, whereConditions] },
-//     skip,
-//     take: limit,
-//     orderBy:
-//       options.sortBy && options.sortOrder
-//         ? { [options.sortBy]: options.sortOrder }
-//         : {
-//             createdAt: "desc",
-//           },
-//   });
-//   const total = await DB.user.count({
-//     where: whereConditions,
-//   });
-//   return {
-//     meta: {
-//       total,
-//       page,
-//       limit,
-//     },
-//     data: result,
-//   };
-// };
+  const result = await DB.serviceProvider.findMany({
+    where: whereConditions,
+    skip,
+    take: limit,
+    orderBy:
+      options.sortBy && options.sortOrder
+        ? { [options.sortBy]: options.sortOrder }
+        : {
+            createdAt: "desc",
+          },
+    include: {
+      feedback: true,
+      servicePlaced: true,
+      serviceType: true,
+      user: true,
+    },
+  });
+  const total = await DB.serviceProvider.count({
+    where: whereConditions,
+  });
+  return {
+    meta: {
+      total,
+      page,
+      limit,
+    },
+    data: result,
+  };
+};
 
 const getMyProfileDb = async (user: JwtPayload) => {
   const result = await DB.user.findUnique({
     where: { id: user.id },
     include: { image: true, subscriber: true },
+  });
+  return result;
+};
+const createServiceProviderDb = async (newProvider: CreateServiceProvider) => {
+  console.log(newProvider)
+  try {
+    let createNewProvider: Record<string, any> | null = null;
+    await DB.$transaction(async (asyncDB) => {
+      createNewProvider = await asyncDB.serviceProvider.findUnique({
+        where: { userId: newProvider.userId },
+        include: {
+          feedback: true,
+          servicePlaced: true,
+          serviceType: true,
+          user: true,
+        },
+      });
+      if (createNewProvider) {
+        return createNewProvider;
+      }
+      const providerId = await generateProviderId(newProvider.serviceTypeId);
+      if (!providerId) {
+        throw new Error("Service provider id create failed try again");
+      }
+      createNewProvider = await asyncDB.serviceProvider.create({
+        data: { ...newProvider, providerId },
+        include: {
+          feedback: true,
+          servicePlaced: true,
+          serviceType: true,
+          user: true,
+        },
+      });
+      const updateUser = await asyncDB.user.update({
+        include: { credential: true },
+        where: { id: createNewProvider.userId },
+        data: {
+          role: "serviceProvider",
+          credential: { update: { role: "serviceProvider" } },
+        },
+      });
+      if (updateUser === null) {
+        throw new Error(
+          "invalid update user or credential information! try again"
+        );
+      }
+    });
+    if (!createNewProvider) {
+      throw new Error("Service provider create failed try again");
+    } else return createNewProvider;
+  } catch (error) {
+    return Promise.reject(error);
+  }
+};
+
+const getLastProviderDb = async (): Promise<ServiceProvider | null> => {
+  const result: ServiceProvider | null = await DB.serviceProvider.findFirst({
+    orderBy: { createdAt: "desc" },
+    take: 1,
   });
   return result;
 };
@@ -430,6 +526,7 @@ const updateUserDb = async (
 };
 
 const UserService = {
+  getServiceProviderDb,
   createUserDb,
   getUsersDb,
   getMyProfileDb,
@@ -437,6 +534,8 @@ const UserService = {
   loginUserDb,
   resetPassword,
   createUserByProviderDb,
+  createServiceProviderDb,
+  getLastProviderDb,
   // getSubscriberDb,
   // getServiceProviderDb,
 };

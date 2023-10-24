@@ -12,3 +12,13 @@ export const userSearchableFields: string[] = [
   "firstName",
   "lastName",
 ];
+
+export const serviceProviderSearchableFields: string[] = [
+  "email",
+  "searchTerm",
+  "providerId",
+  "id",
+  "firstName",
+  "lastName",
+  "status",
+];

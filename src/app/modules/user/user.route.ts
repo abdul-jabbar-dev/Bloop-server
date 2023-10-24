@@ -1,9 +1,12 @@
 import { Router } from "express";
 import UserController from "./user.control";
 import Auth from "../../middlewares/auth";
-import { UpdateProfileUserSchema } from "./user.schema";
+import {
+  UpdateProfileUserSchema, 
+} from "./user.schema";
 import validateRequestJson from "../../middlewares/validateRequestJson";
 import upload from "../../middlewares/uploder/multer";
+ 
 
 const UserRoute = Router();
 
@@ -15,7 +18,7 @@ UserRoute.get(
 UserRoute.patch(
   "/update-profile",
   Auth(["admin", "serviceProvider", "subscriber", "super_admin"]),
-  upload.single("file"), 
+  upload.single("file"),
   validateRequestJson(UpdateProfileUserSchema),
   UserController.updateUser
 );
@@ -26,18 +29,14 @@ UserRoute.get(
 );
 UserRoute.get(
   "/get-subscribers",
-  Auth(["admin","super_admin"]),
+  Auth(["admin", "super_admin"]),
   UserController.getSubscriber
 );
 UserRoute.get(
   "/get-service-provider",
-  Auth(["admin","super_admin"]),
+  Auth(["admin", "super_admin"]),
   UserController.getServiceProvider
 );
 
-UserRoute.post(
-  "/get-service-provider",
-  Auth(["admin","super_admin"]),
-  UserController.getServiceProvider
-);
+
 export default UserRoute;

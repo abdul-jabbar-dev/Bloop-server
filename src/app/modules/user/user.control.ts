@@ -1,4 +1,4 @@
-import { Credential, User } from "@prisma/client";
+import { Credential, ServiceProvider, Status, User } from "@prisma/client";
 import sendResponse from "../../../shared/Response/sendResponse";
 import catchAsync from "../../../shared/catchAsync";
 import { CreateUser, LoginUser } from "../../../types/user/user";
@@ -9,6 +9,7 @@ import { UploadApiResponse } from "cloudinary";
 import DB from "../../../db/prismaClient";
 import pick from "../../../shared/pick";
 import { userFilterableFields } from "./user.constants";
+import { CreateServiceProvider } from "../../../types/user/provider/serviceProvider";
 //Auth route
 const createUserByProvider = catchAsync(async (req, res) => {
   const user: User = req.body;
@@ -55,10 +56,7 @@ const createUserByProvider = catchAsync(async (req, res) => {
     }
   }
 });
-
 const createUser = catchAsync(async (req, res) => {
- 
-  
   const user: CreateUser = req.body;
   user["status"] = "active";
   user["role"] = "subscriber";
@@ -74,15 +72,17 @@ const createUser = catchAsync(async (req, res) => {
 });
 const loginUser = catchAsync(async (req, res) => {
   const user: LoginUser = req.body;
-  const result: Credential = await UserService.loginUserDb(user);
+  const { accessToken, refreshToken, userId, email }: Credential =
+    await UserService.loginUserDb(user);
 
-  res.cookie("refreshToken", result.refreshToken);
-  res.setHeader("Authorization", result.accessToken as string);
+  res.cookie("refreshToken", refreshToken);
+  res.setHeader("Authorization", accessToken as string);
+
   sendResponse(res, {
     data: {
-      accessToken: result.accessToken,
-      email: result.email,
-      id: result.id,
+      accessToken: accessToken,
+      email: email,
+      userId: userId,
     },
   });
 });
@@ -108,6 +108,27 @@ const getUsers = catchAsync(async (req, res) => {
   const result = await UserService.getUsersDb(undefined, filters, options);
   sendResponse(res, { data: result });
 });
+const createServiceProvider = catchAsync(async (req, res) => {
+  const providerInfo: CreateServiceProvider = {
+    serviceTypeId: req.body.serviceTypeId,
+    userId: req.body.userId,
+    availability: true,
+    status: Status.active,
+  };
+  const user = await DB.user.findUnique({ where: { id: providerInfo.userId } });
+  if (!user) {
+    throw new Error("Invalid user id! create user first");
+  } else if (!user.email || user.status === "deactive") {
+    throw new Error("User account is deactivated");
+    }
+    console.log(user)
+
+  const result = await UserService.createServiceProviderDb(providerInfo);
+  sendResponse(res, {
+    data: result,
+  });
+});
+
 const getMyProfile = catchAsync(async (req, res) => {
   const user = req.user;
   if (!user) {
@@ -129,16 +150,11 @@ const getSubscriber = catchAsync(async (req, res) => {
 const getServiceProvider = catchAsync(async (req, res) => {
   const filters = pick(req.query, userFilterableFields);
   const options = pick(req.query, ["limit", "page", "sortBy", "sortOrder"]);
-  const result = await UserService.getUsersDb(
-    "serviceProvider",
-    filters,
-    options
-  );
+  const result = await UserService.getServiceProviderDb(filters, options);
   sendResponse(res, {
     data: result,
   });
 });
-
 const updateUser = catchAsync(async (req, res) => {
   const profile = req.file;
   let uploadedImage: UploadApiResponse | null = null;
@@ -167,5 +183,6 @@ const UserController = {
   loginUser,
   getServiceProvider,
   resetPassword,
+  createServiceProvider,
 };
 export default UserController;

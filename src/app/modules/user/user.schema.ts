@@ -27,6 +27,12 @@ export const LoginUserSchema = z.object({
     password: z.string(),
   }),
 });
+export const CreateServiceProviderSchema = z.object({
+  body: z.object({
+    userId: z.string(),
+    serviceTypeId: z.string(),
+  }),
+});
 export const newPasswordSchema = z.object({
   body: z.object({
     email: z.string(),

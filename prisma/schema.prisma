@@ -7,8 +7,8 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = "postgresql://postgres:BloopDB32002@db.ffnzqlxvciqxixfqwicp.supabase.co:5432/postgres"
-  // url      = env("DATABASE_URL")
+  // url      = "postgresql://postgres:BloopDB32002@db.ffnzqlxvciqxixfqwicp.supabase.co:5432/postgres"
+  url      = env("DATABASE_URL")
 }
 
 enum Gender {
@@ -87,7 +87,6 @@ model Service {
   serviceTypeId String
   service       ServiceType @relation(fields: [serviceTypeId], references: [id])
 
-
   feedback      Feedback[]
   servicePlaced ServicePlaced[]
 
@@ -98,23 +97,24 @@ model Service {
 }
 
 model ServiceType {
-  id                 String            @id @default(uuid())
-  title              String            @unique
-  
-  service            Service[]
-  serviceProvider    ServiceProvider[]
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt 
+  id    String @id @default(uuid())
+  title String @unique
+
+  service         Service[]
+  serviceProvider ServiceProvider[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 
   @@map("serviceType")
 }
 
 model ServiceProvider {
-  id        String  @id @default(uuid())
-  user      User    @relation(fields: [userId], references: [id])
-  userId    String  @unique
+  id         String @id @default(uuid())
+  providerId String @unique
+  user       User   @relation(fields: [userId], references: [id])
+  userId     String @unique
 
-  serviceTypeId String      @unique
+  serviceTypeId String
   serviceType   ServiceType @relation(fields: [serviceTypeId], references: [id])
 
   availability  Boolean

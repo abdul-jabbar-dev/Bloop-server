@@ -8,20 +8,18 @@ const Auth =
   (role: Role[]) => async (req: Request, res: Response, next: NextFunction) => {
     try {
       const token = req?.headers?.authorization;
-      if (!token) {
-        console.log(req.route)
+      if (!token) { 
         next(new Error("Token required"));
         return;
       }
       const decoded = JWT.decodedToken(token, config.accessToken.secret);
+
       if (typeof decoded === "string") {
         throw new Error("Invalid token");
       }
       const isExistUser = await DB.user.findUnique({
         where: { id: decoded.id },
-      });
-      
-      console.log(isExistUser);
+      }); 
       if (!isExistUser) {
         throw new Error("This user has no record found");
       }

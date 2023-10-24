@@ -8,6 +8,8 @@ import prismaClientValidationError from "./errors/prisma/prismaClientValidationE
 import prismaClientKnownRequestError from "./errors/prisma/prismaClientKnownRequestError";
 import { ZodError } from "zod";
 import zodValidator from "./errors/zod/zodValidator";
+import { TokenExpiredError } from "jsonwebtoken";
+import tokenExpiredError from "./errors/jwt/tokenExpiredError";
 
 const GlobalError: ErrorRequestHandler = (
   err,
@@ -16,8 +18,9 @@ const GlobalError: ErrorRequestHandler = (
   next: NextFunction
 ) => {
   console.log(
+    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>global start>>>>>>>>>>>>>>>>>>>>>>>>>>>\n",
     err,
-    ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>global>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+    "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>global end>>>>>>>>>>>>>>>>>>>>>>>>>>>"
   );
 
   let error: TError = {
@@ -33,7 +36,9 @@ const GlobalError: ErrorRequestHandler = (
     error = prismaClientKnownRequestError(err);
   } else if (err instanceof ZodError) {
     error = zodValidator(err);
+  }else if (err instanceof TokenExpiredError){
+    error = tokenExpiredError(err)
   }
-  res.status(error.statusCode).send(error);
+    res.status(error.statusCode).send(error);
 };
 export default GlobalError;
