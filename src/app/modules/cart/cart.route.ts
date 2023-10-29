@@ -18,7 +18,7 @@ CartRoute.get(
 );
 
 CartRoute.get(
-  "/get-cart-item/:itemId",
+  "/get-from-cart/:itemId",
   Auth(["admin", "super_admin", "subscriber", "serviceProvider"]),
   CartControl.getACart
 );

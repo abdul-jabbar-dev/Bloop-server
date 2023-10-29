@@ -34,8 +34,8 @@ const getACart = catchAsync(async (req, res) => {
 
 const setDateToItem = catchAsync(async (req, res) => {
   const { itemId } = req.params;
-  const { date } = req.body;
-  const result = await CartService.setDateToItemDb(itemId, date);
+  const { bookingDate } = req.body;
+  const result = await CartService.setDateToItemDb(itemId, bookingDate);
   sendResponse(res, {
     data: result,
   });

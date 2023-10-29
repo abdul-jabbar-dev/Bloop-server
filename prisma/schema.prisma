@@ -32,6 +32,14 @@ enum Status {
   finish
 }
 
+enum PaymentMethods {
+  Bkash
+  Rocket
+  Nogod
+  CashOnDelivery
+  Card
+}
+
 model User {
   id           String      @id @default(uuid())
   firstName    String
@@ -160,50 +168,6 @@ model ShippingAddress {
   @@map("shippingAddress")
 }
 
-model Order {
-  id              String         @id @default(uuid())
-  subscriberId    String
-  subscriber      Subscriber     @relation(fields: [subscriberId], references: [id])
-  servicePlacedId String
-  feedback        Feedback[]
-  servicePlaced   ServicePlaced?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-
-  @@map("order")
-}
-
-model Payment {
-  id              String         @id @default(uuid())
-  price           String
-  pymentMethord   String
-  
-  servicePlacedId String         @unique
-  servicePlaced   ServicePlaced?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-
-  @@map("payment")
-}
-
-model ServicePlaced {
-  id                String          @id @default(uuid())
-  bookedDate        String
-  orderId           String          @unique
-  serviceId         String
-  serviceProviderId String
-  paymentId         String          @unique
-  status            Status          @default(active)
-  order             Order           @relation(fields: [orderId], references: [id])
-  service           Service         @relation(fields: [serviceId], references: [id])
-  serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id])
-  payment           Payment         @relation(fields: [paymentId], references: [id])
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-
-  @@map("servicePlaced")
-}
-
 model Feedback {
   id                String          @id @default(uuid())
   message           String
@@ -238,12 +202,69 @@ model Media {
 }
 
 model Cart {
-  id        String  @id @default(uuid())
-  userId    String
-  user      User    @relation(fields: [userId], references: [id])
-  date      String?
-  serviceId String
-  service   Service @relation(fields: [serviceId], references: [id])
+  id            String  @id @default(uuid())
+  userId        String
+  bookingDate String?
+  user          User    @relation(fields: [userId], references: [id])
+  serviceId     String
+  service       Service @relation(fields: [serviceId], references: [id])
 
   @@map("cart")
+}
+
+model Order {
+  id String @id @default(uuid())
+
+  subscriberId String
+  status       Status @default(pending)
+
+  subscriber    Subscriber     @relation(fields: [subscriberId], references: [id])
+  feedback      Feedback[]
+  servicePlaced ServicePlaced?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("order")
+}
+
+model ServicePlaced {
+  id String @id @default(uuid())
+
+  bookingDate       String
+  orderId           String  @unique
+  serviceId         String
+  serviceProviderId String
+  paymentId         String? @unique
+  issueItemName     String
+  issueDetails      String
+
+  order           Order           @relation(fields: [orderId], references: [id])
+  service         Service         @relation(fields: [serviceId], references: [id])
+  serviceProvider ServiceProvider @relation(fields: [serviceProviderId], references: [id])
+  payment         Payment?        @relation(fields: [paymentId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("servicePlaced")
+}
+
+model Payment {
+  id String @id @default(uuid())
+
+  price                   String
+  paymentVarificationCode String?
+  status                  PaymentStatus
+  servicePlaced           ServicePlaced?
+  pymentMethord           PaymentMethods
+  createdAt               DateTime       @default(now())
+  updatedAt               DateTime       @updatedAt
+
+  @@map("payment")
+}
+
+enum PaymentStatus {
+  paid
+  pending
 }

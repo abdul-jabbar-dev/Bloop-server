@@ -7,6 +7,6 @@ export const CreateCartSchema = z.object({
 }); 
 export const SetTimeCartSchema = z.object({
   body: z.object({
-    date: z.string(), 
+    bookingDate: z.string(),
   }),
 }); 

@@ -10,14 +10,18 @@ const addToCartDb = async (cart: Cart): Promise<Cart> => {
 const getToCartDb = async (id: string): Promise<Cart[]> => {
   const res = await DB.cart.findMany({
     where: { userId: id },
-    include: { user: true, service: {include:{image:true,service:true}} },
+    include: {
+      user: true,
+      service: { include: { image: true, service: true } },
+    },
   });
   return res;
 };
 
-const getACartDb = async (id: string, user: JwtPayload): Promise<Cart> => {
-  const res: Cart | null = await DB.cart.findUnique({
+const getACartDb = async (id: string, user: JwtPayload) => {
+  const res = await DB.cart.findUnique({
     where: { id },
+    include: { service: {include:{image:true,service:true}}, },
   });
 
   if (!res) {
@@ -29,16 +33,19 @@ const getACartDb = async (id: string, user: JwtPayload): Promise<Cart> => {
   return res;
 };
 
-const setDateToItemDb = async (itemId: string, date: string): Promise<Cart> => {
+const setDateToItemDb = async (
+  itemId: string,
+  bookingDate: string
+): Promise<Cart> => {
   const existDate = await DB.cart.findFirst({
-    where: { id: itemId, date },
+    where: { id: itemId, bookingDate },
   });
   if (existDate) {
     return existDate;
   }
   const res: Cart = await DB.cart.update({
     where: { id: itemId },
-    data: { date },
+    data: { bookingDate },
   });
   return res;
 };
@@ -46,7 +53,7 @@ const setDateToItemDb = async (itemId: string, date: string): Promise<Cart> => {
 const removeDateFromItemDb = async (itemId: string): Promise<Cart> => {
   const res: Cart = await DB.cart.update({
     where: { id: itemId },
-    data: { date: undefined },
+    data: { bookingDate: undefined },
   });
   return res;
 };
