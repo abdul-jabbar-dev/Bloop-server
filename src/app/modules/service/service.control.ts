@@ -29,7 +29,7 @@ const getService = catchAsync(async (req, res) => {
   const filters = pick(req.query, serviceFilterableFields);
   const options = pick(req.query, ["limit", "page", "sortBy", "sortOrder"]);
   const result = await ServiceService.getServiceDb(filters, options); 
-  console.log(result.data)
+ 
   sendResponse(res, {
     data: result.data,
     meta: result.meta,

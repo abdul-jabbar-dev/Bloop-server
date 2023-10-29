@@ -9,7 +9,7 @@ datasource db {
   provider = "postgresql"
   // url      = "postgresql://postgres:BloopDB32002@db.ffnzqlxvciqxixfqwicp.supabase.co:5432/postgres"
   // url      = "postgres://BloopAdmin3:BloopAdmin3@postgresql-151799-0.cloudclusters.net:19053/Bloop"
-   url      = env("DATABASE_URL")
+  url      = env("DATABASE_URL")
 }
 
 enum Gender {
@@ -53,6 +53,7 @@ model User {
 
   subscriber      Subscriber?
   serviceProvider ServiceProvider?
+  cart            Cart[]
 
   @@map("user")
 }
@@ -93,6 +94,7 @@ model Service {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  cart      Cart[]
 
   @@map("service")
 }
@@ -142,21 +144,18 @@ model Subscriber {
 }
 
 model ShippingAddress {
-  id String @id @default(uuid())
-
+  id           String     @id @default(uuid())
+  address      String
+  street       String
+  area         String
+  city         String
+  isDefault    Boolean
   subscriberId String
   subscriber   Subscriber @relation(fields: [subscriberId], references: [id])
-
-  shippingNumber String
-  country        String
-  street         String
-  town           String
-  city           String
-  address        String
-  label          String
-  contactNo      String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  label        String
+  contactNo    String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
   @@map("shippingAddress")
 }
@@ -174,16 +173,31 @@ model Order {
   @@map("order")
 }
 
-model ServicePlaced {
-  id         String @id @default(uuid())
-  bookedDate String
+model Payment {
+  id              String         @id @default(uuid())
+  price           String
+  pymentMethord   String
+  
+  servicePlacedId String         @unique
+  servicePlaced   ServicePlaced?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 
+  @@map("payment")
+}
+
+model ServicePlaced {
+  id                String          @id @default(uuid())
+  bookedDate        String
   orderId           String          @unique
-  order             Order           @relation(fields: [orderId], references: [id])
   serviceId         String
-  service           Service         @relation(fields: [serviceId], references: [id])
   serviceProviderId String
+  paymentId         String          @unique
+  status            Status          @default(active)
+  order             Order           @relation(fields: [orderId], references: [id])
+  service           Service         @relation(fields: [serviceId], references: [id])
   serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id])
+  payment           Payment         @relation(fields: [paymentId], references: [id])
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
 
@@ -221,4 +235,15 @@ model Media {
   service           Service?
 
   @@map("media")
+}
+
+model Cart {
+  id        String  @id @default(uuid())
+  userId    String
+  user      User    @relation(fields: [userId], references: [id])
+  date      String?
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id])
+
+  @@map("cart")
 }

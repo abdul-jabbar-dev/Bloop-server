@@ -49,7 +49,7 @@ const createServiceDb = async (
     }
   } catch (error) {
     await ImgDelete(image.public_id);
-    console.log(error);
+ 
     throw new Error("Service create failed! Try again");
   }
 };
@@ -60,8 +60,7 @@ const getServiceDb = async (
 ): Promise<TResponse<Service[]>> => {
   const { limit, page, skip } = paginationHelpers.calculatePagination(options);
   const { searchTerm, ...filterData } = filters;
-  const andConditions = [];
-console.log(filterData);
+  const andConditions = []; 
   if (searchTerm) {
     andConditions.push({
       OR: serviceSearchableFields.map((field: string) => {
@@ -82,7 +81,7 @@ console.log(filterData);
           const keys = key.split(".");
           let newObj: Record<string, any>={};
           arrayToNestedProperty(newObj, keys, (filterData as any)[key]);
-          console.log(newObj)
+ 
           return  newObj
         } else
           return {

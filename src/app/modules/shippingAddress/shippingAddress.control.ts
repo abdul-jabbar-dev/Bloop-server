@@ -17,7 +17,7 @@ const createShippingAddress = catchAsync(async (req, res) => {
     shippingAddressData,
     user
   );
-  sendResponse(res, { 
+  sendResponse(res, {
     data: result,
   });
 });
@@ -27,7 +27,7 @@ const getShippingAddress = catchAsync(async (req, res) => {
     throw new Error("Invalid Subscriber");
   }
   const result = await ShippingAddressService.getShippingAddressDb(user);
-  sendResponse(res, { 
+  sendResponse(res, {
     data: result,
   });
 });
@@ -41,7 +41,7 @@ const getAShippingAddress = catchAsync(async (req, res) => {
     shippingAddressId,
     user
   );
-  sendResponse(res, { 
+  sendResponse(res, {
     data: result,
   });
 });
@@ -56,7 +56,7 @@ const deleteShippingAddress = catchAsync(async (req, res) => {
     shippingAddressId,
     user
   );
-  sendResponse(res, { 
+  sendResponse(res, {
     data: result,
   });
 });
@@ -68,7 +68,18 @@ const updateShippingAddress = catchAsync(async (req, res) => {
     shippingAddressId,
     data
   );
-  sendResponse(res, { 
+  sendResponse(res, {
+    data: result,
+  });
+});
+const setDefaultShippingAddress = catchAsync(async (req, res) => {
+  const { shippingAddressId } = req.params;
+  const user: JwtPayload = req.user!;
+  const result = await ShippingAddressService.setDefaultShippingAddressDb(
+    shippingAddressId,
+    user
+  );
+  sendResponse(res, {
     data: result,
   });
 });
@@ -79,5 +90,6 @@ const ShippingAddressControl = {
   getAShippingAddress,
   updateShippingAddress,
   deleteShippingAddress,
+  setDefaultShippingAddress,
 };
 export default ShippingAddressControl;
