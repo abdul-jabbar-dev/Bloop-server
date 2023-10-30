@@ -22,8 +22,7 @@ const getACartDb = async (id: string, user: JwtPayload) => {
   const res = await DB.cart.findUnique({
     where: { id },
     include: { service: {include:{image:true,service:true}}, },
-  });
-
+  }); 
   if (!res) {
     throw new Error("Service type not found");
   }

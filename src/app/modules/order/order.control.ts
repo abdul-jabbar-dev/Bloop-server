@@ -1,5 +1,6 @@
-import { Order, ServicePlaced, Subscriber } from "@prisma/client";
+import { Order, PaymentMethods, ServicePlaced } from "@prisma/client";
 import DB from "../../../db/prismaClient";
+import { JwtPayload } from "jsonwebtoken";
 
 type TMakeOrder = {
   orderData: Omit<Order, "createdAt" | "updatedAt" | "id" | "status">;
@@ -9,29 +10,171 @@ type TMakeOrder = {
   >;
 };
 
+const availableProviderDate = async ({
+  providerId,
+  date,
+}: {
+  providerId: string;
+  date: string;
+}) => {
+  const isExistProvider = await DB.serviceProvider.findUnique({
+    where: { id: providerId },
+    include: { servicePlaced: true },
+  });
+  if (!isExistProvider) {
+    throw new Error("Provider id invalid");
+  }
+  const isAvailable = isExistProvider?.servicePlaced.find(
+    (servicePlace: ServicePlaced) => servicePlace.bookingDate === date
+  );
+  if (isAvailable) {
+    return { isAvailable: false, assignment: isAvailable, isExistProvider };
+  } else {
+    return { isAvailable: true, isExistProvider };
+  }
+};
 const createOrderDB = async ({
   orderData,
   oldServicePlacedData,
-}: TMakeOrder) => {
+}: TMakeOrder): Promise<{ servicePlaced: string; order: Order }> => {
   const newServicePlacedData: Partial<ServicePlaced> = {
     ...oldServicePlacedData,
   };
+  let order: Order | null = null;
+  let servicePlaced: ServicePlaced | null = null;
   await DB.$transaction(async (asyncDB) => {
-    const order = await asyncDB.order.create({
-      data: { subscriberId: orderData.subscriberId },
+    order = await asyncDB.order.create({
+      data: { subscriberId: orderData.subscriberId, cartId: orderData.cartId },
     });
     if (!order) {
       throw new Error("Failed to create order");
     }
-    // order created
+    const orderedService = await asyncDB.service.findUnique({
+      where: {
+        id: oldServicePlacedData.serviceId,
+      },
+    });
+    if (!orderedService) {
+      throw new Error("Invalid Service Data ");
+    }
+    const serviceProvider = await asyncDB.serviceProvider.findFirst({
+      where: { serviceType: { id: orderedService.serviceTypeId } },
+    });
+    if (!serviceProvider) {
+      throw new Error("Invalid service provider id");
+    }
+    const isProviderAvailable = await availableProviderDate({
+      providerId: serviceProvider.id,
+      date: oldServicePlacedData.bookingDate,
+    });
+    if (!isProviderAvailable.isAvailable) {
+      throw new Error(
+        "Service provider not available in " +
+          isProviderAvailable.assignment?.bookingDate
+      );
+    }
     newServicePlacedData["orderId"] = order.id;
-    // -----------------------------------------------------servicePlaced
+    newServicePlacedData["serviceProviderId"] =
+      isProviderAvailable.isExistProvider.id;
     console.log(newServicePlacedData);
-    // const servicePlaced = await asyncDB.servicePlaced.create({ data: newServicePlacedData  });
+    // order created
+    // -----------------------------------------------------servicePlaced
+    // console.log(order);
+    servicePlaced = await asyncDB.servicePlaced.create({
+      data: newServicePlacedData as ServicePlaced,
+    });
+    if (!servicePlaced) {
+      throw new Error("Internal server error! Order placed failed");
+    } else {
+      return { servicePlaced, order };
+    }
   });
+  if (!order) {
+    throw new Error("Order create failed");
+  }
+  if (!servicePlaced) {
+    throw new Error("Order placed failed");
+  }
+  return { servicePlaced, order };
+};
+const findByCartDB = async ({ cartId }: { cartId: string }) => {
+  const result = await DB.order.findUnique({
+    where: { cartId },
+    include: {
+      servicePlaced: { include: { payment: true, service: true, order: true } },
+    },
+  });
+
+  return result;
+};
+const ConfirmPaymentDB = async (confirmData: {
+  paymentVarificationCode: string;
+  paymentMethod: PaymentMethods;
+  orderId: string;
+}) => {
+  try {
+    let order: Order | null = null;
+    await DB.$transaction(async (asyncDB) => {
+      order = await asyncDB.order.findUnique({
+        where: { id: confirmData.orderId },
+        include: { servicePlaced: { include: { service: true } } },
+      });
+      if (!order) {
+        throw new Error("No Order found try to valid order id ");
+      }
+      const makePayment = await asyncDB.payment.create({
+        data: {
+          price: (order as any).servicePlaced?.service.price?.toString()!,
+          status:
+            confirmData?.paymentMethod === PaymentMethods.CashOnDelivery
+              ? "pending"
+              : "paid",
+          paymentMethod: confirmData.paymentMethod,
+          paymentVarificationCode: confirmData.paymentVarificationCode,
+          servicePlaced: { connect: { id: (order as any).servicePlaced?.id! } },
+        },
+      });
+
+      if (!makePayment) {
+        throw new Error("internal server error payment failed");
+      }
+      const updateOrder = await DB.order.update({
+        where: { id: order.id },
+        data: { status: "booked" },
+      });
+      if (!updateOrder) {
+        throw new Error("internal server error payment update");
+      }
+
+      // const updateServicePlaced = await DB.servicePlaced.update({
+      //   where: { id: (order as any).servicePlaced?.id! },
+      //   data: { paymentId: makePayment.id },
+      // });
+      // if (!updateServicePlaced) {
+      //   throw new Error("internal server error set payment");
+      // }
+    });
+    if (!order) {
+      throw new Error("internal server error! checkout failed");
+    }
+    return order;
+  } catch (error) {
+    return Promise.reject(error);
+  }
 };
 
+const findMyOrderDB = async (user: JwtPayload) => {
+  const result = await DB.order.findMany({
+    where: { subscriber: { userId: user.id } },
+    include: { feedback: true, servicePlaced: true },
+  });
+return result
+};
 const OrderControl = {
   createOrderDB,
+  availableProviderDate,
+  findByCartDB,
+  ConfirmPaymentDB,
+  findMyOrderDB,
 };
 export default OrderControl;
