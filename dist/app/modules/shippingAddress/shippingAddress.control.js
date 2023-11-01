@@ -70,11 +70,20 @@ const updateShippingAddress = (0, catchAsync_1.default)((req, res) => __awaiter(
         data: result,
     });
 }));
+const setDefaultShippingAddress = (0, catchAsync_1.default)((req, res) => __awaiter(void 0, void 0, void 0, function* () {
+    const { shippingAddressId } = req.params;
+    const user = req.user;
+    const result = yield shippingAddress_service_1.default.setDefaultShippingAddressDb(shippingAddressId, user);
+    (0, sendResponse_1.default)(res, {
+        data: result,
+    });
+}));
 const ShippingAddressControl = {
     createShippingAddress,
     getShippingAddress,
     getAShippingAddress,
     updateShippingAddress,
     deleteShippingAddress,
+    setDefaultShippingAddress,
 };
 exports.default = ShippingAddressControl;

@@ -7,7 +7,7 @@ const addToCartDb = async (cart: Cart): Promise<Cart> => {
   return res;
 };
 
-const getToCartDb = async (id: string): Promise<Cart[]> => {
+const getToCartDb = async (id: string)  => {
   const res = await DB.cart.findMany({
     where: { userId: id },
     include: {
@@ -15,14 +15,23 @@ const getToCartDb = async (id: string): Promise<Cart[]> => {
       service: { include: { image: true, service: true } },
     },
   });
-  return res;
+  const orders = await res.map(async (cart) => ({
+    ...cart,
+    order: await DB.order.findUnique({
+      where: { cartId: cart.id },
+      include:{servicePlaced:true}
+    }),
+  }));
+  const result = await Promise.all(orders) 
+  return result;
 };
 
-const getACartDb = async (id: string, user: JwtPayload) => {
+const getACartDb = async (id: string, user: JwtPayload) => { 
   const res = await DB.cart.findUnique({
-    where: { id },
-    include: { service: {include:{image:true,service:true}}, },
-  }); 
+    where: { id},
+    include: { service: { include: { image: true, service: true } } },
+  });
+  
   if (!res) {
     throw new Error("Service type not found");
   }

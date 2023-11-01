@@ -12,7 +12,10 @@ import sendResponse from "../../../shared/Response/sendResponse";
 const availableProviderDate = catchAsync(async (req, res) => {
   const { providerId } = req.params;
   const { date } = req.body;
-  const result = await OrderControl.availableProviderDate({ providerId, date });
+  const result = await OrderControl.availableProviderDate({
+    providerId,
+    bookingDate: date,
+  });
   sendResponse(res, { data: result });
 });
 const findByCart = catchAsync(async (req, res) => {
@@ -20,11 +23,24 @@ const findByCart = catchAsync(async (req, res) => {
   const result = await OrderControl.findByCartDB({ cartId });
   sendResponse(res, { data: result });
 });
-const findMyOrder = catchAsync(async (req, res) => { 
-  const user = req.user!
+const findMyOrder = catchAsync(async (req, res) => {
+  const user = req.user!;
   const result = await OrderControl.findMyOrderDB(user);
   sendResponse(res, { data: result });
 });
+
+const findProviderActiveOrder = catchAsync(async (req, res) => {
+  const user = req.user!;
+  const result = await OrderControl.findProviderOrderDB(user, "booked");
+  sendResponse(res, { data: result });
+});
+const findProviderAllOrder = catchAsync(async (req, res) => {
+  const user = req.user!;
+  console.log(user)
+  const result = await OrderControl.findProviderOrderDB(user, {});
+  sendResponse(res, { data: result });
+});
+
 const createOrder = catchAsync(async (req, res) => {
   const subscriber: Subscriber | null = await DB.subscriber.findUnique({
     where: { userId: req?.user?.id },
@@ -48,12 +64,11 @@ const createOrder = catchAsync(async (req, res) => {
     ServicePlaced,
     "id" | "paymentId" | "createdAt" | "updatedAt" | "orderId"
   > = { ...req.body, cartId: undefined };
-  const result: { servicePlaced: string; order: Order } =
+  const result /* : { servicePlaced: string; order: Order } */ =
     await OrderControl.createOrderDB({
       orderData,
       oldServicePlacedData: servicePlacedData,
     });
-  console.log(result);
   sendResponse(res, { data: result });
 });
 
@@ -68,6 +83,20 @@ const confirmPayment = catchAsync(async (req, res) => {
     data: result,
   });
 });
+const completeOrder = catchAsync(async (req, res) => {
+  const { orderId } = req.params;
+  const user = req.user;
+  const provider = await DB.serviceProvider.findUnique({
+    where: { userId: user?.id },
+  });
+  if (!provider) {
+    throw new Error("Invalid provider");
+  }
+  const result = await OrderControl.completeOrderDB(orderId, provider);
+  sendResponse(res, {
+    data: result,
+  });
+});
 
 const OrderService = {
   createOrder,
@@ -75,5 +104,8 @@ const OrderService = {
   availableProviderDate,
   findByCart,
   confirmPayment,
+  findProviderAllOrder,
+  findProviderActiveOrder,
+  completeOrder,
 };
 export default OrderService;

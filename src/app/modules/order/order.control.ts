@@ -1,4 +1,11 @@
-import { Order, PaymentMethods, ServicePlaced } from "@prisma/client";
+import {
+  Order,
+  PaymentMethods,
+  Prisma,
+  ServicePlaced,
+  ServiceProvider,
+  Status,
+} from "@prisma/client";
 import DB from "../../../db/prismaClient";
 import { JwtPayload } from "jsonwebtoken";
 
@@ -12,10 +19,10 @@ type TMakeOrder = {
 
 const availableProviderDate = async ({
   providerId,
-  date,
+  bookingDate,
 }: {
   providerId: string;
-  date: string;
+  bookingDate: string;
 }) => {
   const isExistProvider = await DB.serviceProvider.findUnique({
     where: { id: providerId },
@@ -25,7 +32,7 @@ const availableProviderDate = async ({
     throw new Error("Provider id invalid");
   }
   const isAvailable = isExistProvider?.servicePlaced.find(
-    (servicePlace: ServicePlaced) => servicePlace.bookingDate === date
+    (servicePlace: ServicePlaced) => servicePlace.bookingDate === bookingDate
   );
   if (isAvailable) {
     return { isAvailable: false, assignment: isAvailable, isExistProvider };
@@ -43,12 +50,6 @@ const createOrderDB = async ({
   let order: Order | null = null;
   let servicePlaced: ServicePlaced | null = null;
   await DB.$transaction(async (asyncDB) => {
-    order = await asyncDB.order.create({
-      data: { subscriberId: orderData.subscriberId, cartId: orderData.cartId },
-    });
-    if (!order) {
-      throw new Error("Failed to create order");
-    }
     const orderedService = await asyncDB.service.findUnique({
       where: {
         id: oldServicePlacedData.serviceId,
@@ -58,14 +59,29 @@ const createOrderDB = async ({
       throw new Error("Invalid Service Data ");
     }
     const serviceProvider = await asyncDB.serviceProvider.findFirst({
-      where: { serviceType: { id: orderedService.serviceTypeId } },
+      include: { servicePlaced: true },
+      where: {
+        serviceType: { id: orderedService.serviceTypeId },
+        servicePlaced: {
+          some: { NOT: { bookingDate: oldServicePlacedData.bookingDate } },
+        },
+      },
     });
     if (!serviceProvider) {
-      throw new Error("Invalid service provider id");
+      throw new Error(
+        "No Worker available in " + oldServicePlacedData.bookingDate
+      );
     }
+    order = await asyncDB.order.create({
+      data: { subscriberId: orderData.subscriberId, cartId: orderData.cartId },
+    });
+    if (!order) {
+      throw new Error("Failed to create order");
+    }
+
     const isProviderAvailable = await availableProviderDate({
       providerId: serviceProvider.id,
-      date: oldServicePlacedData.bookingDate,
+      bookingDate: oldServicePlacedData.bookingDate,
     });
     if (!isProviderAvailable.isAvailable) {
       throw new Error(
@@ -104,7 +120,6 @@ const findByCartDB = async ({ cartId }: { cartId: string }) => {
       servicePlaced: { include: { payment: true, service: true, order: true } },
     },
   });
-
   return result;
 };
 const ConfirmPaymentDB = async (confirmData: {
@@ -145,14 +160,6 @@ const ConfirmPaymentDB = async (confirmData: {
       if (!updateOrder) {
         throw new Error("internal server error payment update");
       }
-
-      // const updateServicePlaced = await DB.servicePlaced.update({
-      //   where: { id: (order as any).servicePlaced?.id! },
-      //   data: { paymentId: makePayment.id },
-      // });
-      // if (!updateServicePlaced) {
-      //   throw new Error("internal server error set payment");
-      // }
     });
     if (!order) {
       throw new Error("internal server error! checkout failed");
@@ -162,19 +169,63 @@ const ConfirmPaymentDB = async (confirmData: {
     return Promise.reject(error);
   }
 };
-
 const findMyOrderDB = async (user: JwtPayload) => {
   const result = await DB.order.findMany({
     where: { subscriber: { userId: user.id } },
-    include: { feedback: true, servicePlaced: true },
+    include: {
+      feedback: true,
+      servicePlaced: {
+        include: { payment: true, service: true, serviceProvider: true },
+      },
+    },
   });
-return result
+  return result;
 };
+
+const findProviderOrderDB = async (user: JwtPayload, isActive: Status | {}) => {
+  const result = await DB.order.findMany({
+    include: {
+      feedback: true,
+      servicePlaced: {
+        include: { payment: true, service: true, serviceProvider: true,order:true },
+      },
+    },
+    where: {
+      servicePlaced: {
+        serviceProviderId: user.serviceProvider.id,
+      },
+      status: isActive,
+    },
+    orderBy: { servicePlaced: { createdAt: "desc" } },
+  });
+
+  return result;
+};
+
+const completeOrderDB = async (orderId: string, provider: ServiceProvider) => {
+  const order = await DB.order.findUnique({
+    where: { id: orderId, servicePlaced: { serviceProviderId: provider.id } },
+  });
+  if (!order) {
+    throw new Error("Invalid Order");
+  }
+  const updateOrder = await DB.order.update({
+    where: { id: order.id },
+    data: { status: "finish" },
+  });
+  if (!updateOrder) {
+    throw new Error("Failed to completed order");
+  }
+ return updateOrder
+};
+
 const OrderControl = {
   createOrderDB,
   availableProviderDate,
   findByCartDB,
   ConfirmPaymentDB,
   findMyOrderDB,
+  findProviderOrderDB,
+  completeOrderDB,
 };
 export default OrderControl;

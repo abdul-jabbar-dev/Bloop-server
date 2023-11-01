@@ -33,12 +33,28 @@ OrderRoute.get(
   Auth(["subscriber"]),
   OrderService.findMyOrder
 );
+OrderRoute.get(
+  "/find-providers-all-orders",
+  Auth(["serviceProvider"]),
+  OrderService.findProviderAllOrder
+);
+
+OrderRoute.get(
+  "/find-providers-active-orders",
+  Auth(["serviceProvider"]),
+  OrderService.findProviderActiveOrder
+);
 
 OrderRoute.post(
   "/confirm-payment",
   Auth(["subscriber"]),
   validateRequest(confirmPaymentSchema),
   OrderService.confirmPayment
+);
+OrderRoute.post(
+  "/complete-order/:orderId", 
+  Auth(["serviceProvider"]),
+  OrderService.completeOrder
 );
 
 export default OrderRoute;

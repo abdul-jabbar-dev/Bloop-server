@@ -14,7 +14,7 @@ export const availableProviderDateSchema = z.object({
     date: z.string(),
   }),
 });
-
+ 
 export const confirmPaymentSchema = z.object({
   body: z.object({
     orderId: z.string(),

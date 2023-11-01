@@ -7,9 +7,9 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  // url      = "postgresql://postgres:BloopDB32002@db.ffnzqlxvciqxixfqwicp.supabase.co:5432/postgres"
+  url      = "postgresql://postgres:BloopDB32002@db.ffnzqlxvciqxixfqwicp.supabase.co:5432/postgres"
   // url      = "postgres://BloopAdmin3:BloopAdmin3@postgresql-151799-0.cloudclusters.net:19053/Bloop"
-  url      = env("DATABASE_URL")
+  // url      = env("DATABASE_URL")
 }
 
 enum Gender {
@@ -212,12 +212,23 @@ model Cart {
   @@map("cart")
 }
 
+// enum OrderAssignmentStatus {
+//   OrderCreated 
+//   OrderConfirmed
+//   WorkerMoving
+//   Working
+//   OrderFinished
+  
+
+// }
+
 model Order {
   id     String @id @default(uuid())
   cartId String @unique
 
-  subscriberId String
-  status       Status @default(pending)
+  // assignmentStatus OrderAssignmentStatus @default(OrderCreated)
+  subscriberId     String
+  status           Status                @default(pending)
 
   subscriber    Subscriber     @relation(fields: [subscriberId], references: [id])
   feedback      Feedback[]

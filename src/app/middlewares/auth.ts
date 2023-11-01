@@ -8,7 +8,7 @@ const Auth =
   (role: Role[]) => async (req: Request, res: Response, next: NextFunction) => {
     try {
       const token = req?.headers?.authorization;
-      if (!token) { 
+      if (!token) {
         next(new Error("Token required"));
         return;
       }
@@ -19,7 +19,8 @@ const Auth =
       }
       const isExistUser = await DB.user.findUnique({
         where: { id: decoded.id },
-      }); 
+        include: { subscriber: true, serviceProvider: true },
+      });
       if (!isExistUser) {
         throw new Error("This user has no record found");
       }

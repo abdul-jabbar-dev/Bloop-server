@@ -31,6 +31,7 @@ const config_1 = __importDefault(require("../../../config"));
 const imgUpload_1 = require("../../../shared/uploads/imgUpload");
 const paginationHelpers_1 = require("../../../shared/paginationHelpers");
 const user_constants_1 = require("./user.constants");
+const generateProviderId_1 = __importDefault(require("../../../shared/utils/generateProviderId"));
 //Auth
 const createUserDb = (data) => __awaiter(void 0, void 0, void 0, function* () {
     const { password } = data, user = __rest(data, ["password"]);
@@ -84,7 +85,17 @@ const loginUserDb = ({ email, password, }) => __awaiter(void 0, void 0, void 0, 
     if (!isMatch) {
         throw new Error("Invalid Password");
     }
-    return isExist;
+    const newLoginDetails = yield prismaClient_1.default.credential.update({
+        where: { id: isExist.id },
+        data: {
+            accessToken: jwt_1.default.generateToken({ id: isExist.userId, role: isExist.role }, config_1.default.accessToken.secret, { expiresIn: config_1.default.accessToken.validate }),
+            refreshToken: jwt_1.default.generateToken({ id: isExist.userId, role: isExist.role }, config_1.default.refreshToken.secret, { expiresIn: config_1.default.refreshToken.validate }),
+        },
+    });
+    if (!newLoginDetails) {
+        throw new Error("Login failed");
+    }
+    return newLoginDetails;
 });
 const resetPassword = (resetConfig) => __awaiter(void 0, void 0, void 0, function* () {
     const isExist = yield prismaClient_1.default.credential.findUnique({
@@ -267,61 +278,120 @@ const getUsersDb = (userRole, filters, options) => __awaiter(void 0, void 0, voi
 //     data: result,
 //   };
 // };
-// const getServiceProviderDb = async (
-//   filters: { searchTerm?: string | undefined },
-//   options: IPaginationOptions
-// ): Promise<TResponse<User[]>> => {
-//   const { limit, page, skip } = paginationHelpers.calculatePagination(options);
-//   const { searchTerm, ...filterData } = filters;
-//   const andConditions = [];
-//   if (searchTerm) {
-//     andConditions.push({
-//       OR: userSearchableFields.map((field) => ({
-//         [field]: {
-//           contains: searchTerm,
-//           mode: "insensitive",
-//         },
-//       })),
-//     });
-//   }
-//   if (Object.keys(filterData).length > 0) {
-//     andConditions.push({
-//       AND: Object.keys(filterData).map((key) => ({
-//         [key]: {
-//           equals: (filterData as any)[key],
-//         },
-//       })),
-//     });
-//   }
-//   const whereConditions: Prisma.UserWhereInput =
-//     andConditions.length > 0 ? { AND: andConditions } : {};
-//   const result = await DB.user.findMany({
-//     where: { AND: [{ role: "serviceProvider" }, whereConditions] },
-//     skip,
-//     take: limit,
-//     orderBy:
-//       options.sortBy && options.sortOrder
-//         ? { [options.sortBy]: options.sortOrder }
-//         : {
-//             createdAt: "desc",
-//           },
-//   });
-//   const total = await DB.user.count({
-//     where: whereConditions,
-//   });
-//   return {
-//     meta: {
-//       total,
-//       page,
-//       limit,
-//     },
-//     data: result,
-//   };
-// };
+const getServiceProviderDb = (filters, options) => __awaiter(void 0, void 0, void 0, function* () {
+    const { limit, page, skip } = paginationHelpers_1.paginationHelpers.calculatePagination(options);
+    const { searchTerm } = filters, filterData = __rest(filters, ["searchTerm"]);
+    const andConditions = [];
+    if (searchTerm) {
+        andConditions.push({
+            OR: user_constants_1.serviceProviderSearchableFields.map((field) => ({
+                [field]: {
+                    contains: searchTerm,
+                    mode: "insensitive",
+                },
+            })),
+        });
+    }
+    if (Object.keys(filterData).length > 0) {
+        andConditions.push({
+            AND: Object.keys(filterData).map((key) => ({
+                [key]: {
+                    equals: filterData[key],
+                },
+            })),
+        });
+    }
+    const whereConditions = andConditions.length > 0 ? { AND: andConditions } : {};
+    const result = yield prismaClient_1.default.serviceProvider.findMany({
+        where: whereConditions,
+        skip,
+        take: limit,
+        orderBy: options.sortBy && options.sortOrder
+            ? { [options.sortBy]: options.sortOrder }
+            : {
+                createdAt: "desc",
+            },
+        include: {
+            feedback: true,
+            servicePlaced: true,
+            serviceType: true,
+            user: true,
+        },
+    });
+    const total = yield prismaClient_1.default.serviceProvider.count({
+        where: whereConditions,
+    });
+    return {
+        meta: {
+            total,
+            page,
+            limit,
+        },
+        data: result,
+    };
+});
 const getMyProfileDb = (user) => __awaiter(void 0, void 0, void 0, function* () {
     const result = yield prismaClient_1.default.user.findUnique({
         where: { id: user.id },
         include: { image: true, subscriber: true },
+    });
+    return result;
+});
+const createServiceProviderDb = (newProvider) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        let createNewProvider = null;
+        yield prismaClient_1.default.$transaction((asyncDB) => __awaiter(void 0, void 0, void 0, function* () {
+            createNewProvider = yield asyncDB.serviceProvider.findUnique({
+                where: { userId: newProvider.userId },
+                include: {
+                    feedback: true,
+                    servicePlaced: true,
+                    serviceType: true,
+                    user: true,
+                },
+            });
+            if (createNewProvider) {
+                return createNewProvider;
+            }
+            const providerId = yield (0, generateProviderId_1.default)(newProvider.serviceTypeId);
+            if (!providerId) {
+                throw new Error("Service provider id create failed try again");
+            }
+            createNewProvider = yield asyncDB.serviceProvider.create({
+                data: Object.assign(Object.assign({}, newProvider), { providerId }),
+                include: {
+                    feedback: true,
+                    servicePlaced: true,
+                    serviceType: true,
+                    user: true,
+                },
+            });
+            const updateUser = yield asyncDB.user.update({
+                include: { credential: true },
+                where: { id: createNewProvider.userId },
+                data: {
+                    role: "serviceProvider",
+                    credential: { update: { role: "serviceProvider" } },
+                },
+            });
+            if (updateUser === null) {
+                throw new Error("invalid update user or credential information! try again");
+            }
+        }));
+        if (!createNewProvider) {
+            throw new Error("Service provider create failed try again");
+        }
+        else
+            return createNewProvider;
+    }
+    catch (error) {
+        return Promise.reject(error);
+    }
+});
+const getLastProviderDb = () => __awaiter(void 0, void 0, void 0, function* () {
+    const result = yield prismaClient_1.default.serviceProvider.findFirst({
+        orderBy: { createdAt: "desc" },
+        take: 1,
     });
     return result;
 });
@@ -381,7 +451,6 @@ const updateUserDb = (user, userInfo, image) => __awaiter(void 0, void 0, void 0
             if (!updateStatus) {
                 throw new Error("Invalid update status");
             }
-            console.log(updateProfile);
         }));
         return updateProfile;
     }
@@ -391,6 +460,7 @@ const updateUserDb = (user, userInfo, image) => __awaiter(void 0, void 0, void 0
     }
 });
 const UserService = {
+    getServiceProviderDb,
     createUserDb,
     getUsersDb,
     getMyProfileDb,
@@ -398,6 +468,8 @@ const UserService = {
     loginUserDb,
     resetPassword,
     createUserByProviderDb,
+    createServiceProviderDb,
+    getLastProviderDb,
     // getSubscriberDb,
     // getServiceProviderDb,
 };

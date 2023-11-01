@@ -19,7 +19,7 @@ const Auth = (role) => (req, res, next) => __awaiter(void 0, void 0, void 0, fun
     var _a;
     try {
         const token = (_a = req === null || req === void 0 ? void 0 : req.headers) === null || _a === void 0 ? void 0 : _a.authorization;
-        if (!token) { 
+        if (!token) {
             next(new Error("Token required"));
             return;
         }
@@ -29,7 +29,8 @@ const Auth = (role) => (req, res, next) => __awaiter(void 0, void 0, void 0, fun
         }
         const isExistUser = yield prismaClient_1.default.user.findUnique({
             where: { id: decoded.id },
-        }); 
+            include: { subscriber: true, serviceProvider: true },
+        });
         if (!isExistUser) {
             throw new Error("This user has no record found");
         }
