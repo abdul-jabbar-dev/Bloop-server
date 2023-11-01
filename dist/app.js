@@ -10,10 +10,10 @@ const GlobalError_1 = __importDefault(require("./app/middlewares/error/GlobalErr
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const app = (0, express_1.default)();
 //parser
-app.use(express_1.default.json());
-app.use(express_1.default.urlencoded({ extended: true }));
 app.use((0, cors_1.default)());
+app.use(express_1.default.urlencoded({ extended: true }));
 app.use((0, cookie_parser_1.default)());
+app.use(express_1.default.json());
 app.use("/api/v1/", router_1.default);
 app.use(GlobalError_1.default);
 exports.default = app;

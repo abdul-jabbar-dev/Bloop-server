@@ -7,5 +7,7 @@ exports.serviceFilterableFields = [
     "id",
     "orderType",
     "status",
+    "serviceTypeId",
+    "service.title",
 ];
 exports.serviceSearchableFields = ["title"];

@@ -6,6 +6,7 @@ import { IPaginationOptions } from "../../../types/pagination";
 import { paginationHelpers } from "../../../shared/paginationHelpers";
 import { serviceSearchableFields } from "./service.constants";
 import TResponse from "../../../types/Response/TResponse";
+import arrayToNestedProperty from "../../../shared/utils/arrayToNestedProperty";
 
 const createServiceDb = async (
   service: Service,
@@ -48,7 +49,7 @@ const createServiceDb = async (
     }
   } catch (error) {
     await ImgDelete(image.public_id);
-    console.log(error);
+ 
     throw new Error("Service create failed! Try again");
   }
 };
@@ -59,25 +60,36 @@ const getServiceDb = async (
 ): Promise<TResponse<Service[]>> => {
   const { limit, page, skip } = paginationHelpers.calculatePagination(options);
   const { searchTerm, ...filterData } = filters;
-  const andConditions = [];
-
+  const andConditions = []; 
   if (searchTerm) {
     andConditions.push({
-      OR: serviceSearchableFields.map((field) => ({
-        [field]: {
-          contains: searchTerm,
-          mode: "insensitive",
-        },
-      })),
+      OR: serviceSearchableFields.map((field: string) => {
+        return {
+          [field]: {
+            contains: searchTerm,
+            mode: "insensitive",
+          },
+        };
+      }),
     });
   }
   if (Object.keys(filterData).length > 0) {
     andConditions.push({
-      AND: Object.keys(filterData).map((key) => ({
-        [key]: {
-          equals: (filterData as any)[key],
-        },
-      })),
+      AND: Object.keys(filterData).map((key) => {
+        
+        if (key.includes(".")) {
+          const keys = key.split(".");
+          let newObj: Record<string, any>={};
+          arrayToNestedProperty(newObj, keys, (filterData as any)[key]);
+ 
+          return  newObj
+        } else
+          return {
+            [key]: {
+              equals: (filterData as any)[key],
+            },
+          };
+      }),
     });
   }
   const whereConditions: Prisma.ServiceWhereInput =
@@ -85,13 +97,14 @@ const getServiceDb = async (
       ? { AND: andConditions as Prisma.ServiceWhereInput }
       : {};
   const result = await DB.service.findMany({
-    where: whereConditions,
     include: {
       feedback: true,
       image: true,
       service: true,
       servicePlaced: true,
     },
+    where: whereConditions,
+
     skip,
     take: limit,
     orderBy:

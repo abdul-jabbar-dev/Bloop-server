@@ -27,6 +27,7 @@ const prismaClient_1 = __importDefault(require("../../../db/prismaClient"));
 const imgUpload_1 = require("../../../shared/uploads/imgUpload");
 const paginationHelpers_1 = require("../../../shared/paginationHelpers");
 const service_constants_1 = require("./service.constants");
+const arrayToNestedProperty_1 = __importDefault(require("../../../shared/utils/arrayToNestedProperty"));
 const createServiceDb = (service, image) => __awaiter(void 0, void 0, void 0, function* () {
     let newService = null;
     try {
@@ -66,7 +67,6 @@ const createServiceDb = (service, image) => __awaiter(void 0, void 0, void 0, fu
     }
     catch (error) {
         yield (0, imgUpload_1.ImgDelete)(image.public_id);
-        console.log(error);
         throw new Error("Service create failed! Try again");
     }
 });
@@ -76,34 +76,45 @@ const getServiceDb = (filters, options) => __awaiter(void 0, void 0, void 0, fun
     const andConditions = [];
     if (searchTerm) {
         andConditions.push({
-            OR: service_constants_1.serviceSearchableFields.map((field) => ({
-                [field]: {
-                    contains: searchTerm,
-                    mode: "insensitive",
-                },
-            })),
+            OR: service_constants_1.serviceSearchableFields.map((field) => {
+                return {
+                    [field]: {
+                        contains: searchTerm,
+                        mode: "insensitive",
+                    },
+                };
+            }),
         });
     }
     if (Object.keys(filterData).length > 0) {
         andConditions.push({
-            AND: Object.keys(filterData).map((key) => ({
-                [key]: {
-                    equals: filterData[key],
-                },
-            })),
+            AND: Object.keys(filterData).map((key) => {
+                if (key.includes(".")) {
+                    const keys = key.split(".");
+                    let newObj = {};
+                    (0, arrayToNestedProperty_1.default)(newObj, keys, filterData[key]);
+                    return newObj;
+                }
+                else
+                    return {
+                        [key]: {
+                            equals: filterData[key],
+                        },
+                    };
+            }),
         });
     }
     const whereConditions = andConditions.length > 0
         ? { AND: andConditions }
         : {};
     const result = yield prismaClient_1.default.service.findMany({
-        where: whereConditions,
         include: {
             feedback: true,
             image: true,
             service: true,
             servicePlaced: true,
         },
+        where: whereConditions,
         skip,
         take: limit,
         orderBy: options.sortBy && options.sortOrder

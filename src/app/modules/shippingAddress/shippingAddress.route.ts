@@ -10,29 +10,33 @@ import {
 const ShippingAddressRoute = Router();
 
 ShippingAddressRoute.post(
-  "/",
+  "/create-shipping-address",
   Auth(["subscriber"]),
   validateRequest(CreateShippingAddressSchema),
   ShippingAddressControl.createShippingAddress
 );
 ShippingAddressRoute.get(
-  "/",
+  "/get-shipping-address",
   Auth(["subscriber"]),
   ShippingAddressControl.getShippingAddress
 );
 ShippingAddressRoute.get(
-  "/:shippingAddressId",
+  "/get-shipping-address/:shippingAddressId",
   Auth(["subscriber"]),
   ShippingAddressControl.getAShippingAddress
 );
+
 ShippingAddressRoute.delete(
-  "/:shippingAddressId",
+  "/delete-shipping-address/:shippingAddressId",
   Auth(["subscriber"]),
   ShippingAddressControl.deleteShippingAddress
 );
 
-
-
+ShippingAddressRoute.patch(
+  "/set-default/:shippingAddressId",
+  Auth(["subscriber"]), 
+  ShippingAddressControl.setDefaultShippingAddress
+);
 // Unhandled
 ShippingAddressRoute.patch(
   "/:shippingAddressId",

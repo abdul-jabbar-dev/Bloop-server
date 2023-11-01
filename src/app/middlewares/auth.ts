@@ -9,19 +9,18 @@ const Auth =
     try {
       const token = req?.headers?.authorization;
       if (!token) {
-        console.log(req.route)
         next(new Error("Token required"));
         return;
       }
       const decoded = JWT.decodedToken(token, config.accessToken.secret);
+
       if (typeof decoded === "string") {
         throw new Error("Invalid token");
       }
       const isExistUser = await DB.user.findUnique({
         where: { id: decoded.id },
+        include: { subscriber: true, serviceProvider: true },
       });
-      
-      console.log(isExistUser);
       if (!isExistUser) {
         throw new Error("This user has no record found");
       }

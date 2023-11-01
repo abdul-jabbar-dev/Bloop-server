@@ -11,6 +11,7 @@ const generateToken = (
 };
 
 const decodedToken = (token: string, accessOrRefreshSecret: string) => {
+
   const data: JwtPayload | string = jwt.verify(token, accessOrRefreshSecret);
   return data;
 };

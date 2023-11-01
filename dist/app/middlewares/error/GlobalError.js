@@ -8,8 +8,10 @@ const prismaClientValidationError_1 = __importDefault(require("./errors/prisma/p
 const prismaClientKnownRequestError_1 = __importDefault(require("./errors/prisma/prismaClientKnownRequestError"));
 const zod_1 = require("zod");
 const zodValidator_1 = __importDefault(require("./errors/zod/zodValidator"));
+const jsonwebtoken_1 = require("jsonwebtoken");
+const tokenExpiredError_1 = __importDefault(require("./errors/jwt/tokenExpiredError"));
 const GlobalError = (err, req, res, next) => {
-    console.log(err, ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>global>>>>>>>>>>>>>>>>>>>>>>>>>>>");
+    console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>global start>>>>>>>>>>>>>>>>>>>>>>>>>>>\n", err, "\n>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>global end>>>>>>>>>>>>>>>>>>>>>>>>>>>");
     let error = {
         name: err === null || err === void 0 ? void 0 : err.name,
         message: err === null || err === void 0 ? void 0 : err.message,
@@ -24,6 +26,9 @@ const GlobalError = (err, req, res, next) => {
     }
     else if (err instanceof zod_1.ZodError) {
         error = (0, zodValidator_1.default)(err);
+    }
+    else if (err instanceof jsonwebtoken_1.TokenExpiredError) {
+        error = (0, tokenExpiredError_1.default)(err);
     }
     res.status(error.statusCode).send(error);
 };

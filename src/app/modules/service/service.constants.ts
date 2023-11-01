@@ -4,6 +4,8 @@ export const serviceFilterableFields: string[] = [
   "id",
   "orderType",
   "status",
+  "serviceTypeId",
+  "service.title",
 ];
 
 export const serviceSearchableFields: string[] = ["title"];

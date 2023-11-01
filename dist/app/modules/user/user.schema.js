@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.newPasswordSchema = exports.LoginUserSchema = exports.UpdateProfileUserSchema = void 0;
+exports.newPasswordSchema = exports.CreateServiceProviderSchema = exports.LoginUserSchema = exports.UpdateProfileUserSchema = void 0;
 const zod_1 = __importDefault(require("zod"));
 const CreateUserSchema = zod_1.default.object({
     body: zod_1.default.object({
@@ -31,6 +31,12 @@ exports.LoginUserSchema = zod_1.default.object({
     body: zod_1.default.object({
         email: zod_1.default.string(),
         password: zod_1.default.string(),
+    }),
+});
+exports.CreateServiceProviderSchema = zod_1.default.object({
+    body: zod_1.default.object({
+        userId: zod_1.default.string(),
+        serviceTypeId: zod_1.default.string(),
     }),
 });
 exports.newPasswordSchema = zod_1.default.object({

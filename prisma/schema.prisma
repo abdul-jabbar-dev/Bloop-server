@@ -8,6 +8,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = "postgresql://postgres:BloopDB32002@db.ffnzqlxvciqxixfqwicp.supabase.co:5432/postgres"
+  // url      = "postgres://BloopAdmin3:BloopAdmin3@postgresql-151799-0.cloudclusters.net:19053/Bloop"
   // url      = env("DATABASE_URL")
 }
 
@@ -31,6 +32,14 @@ enum Status {
   finish
 }
 
+enum PaymentMethods {
+  Bkash
+  Rocket
+  Nogod
+  CashOnDelivery
+  Card
+}
+
 model User {
   id           String      @id @default(uuid())
   firstName    String
@@ -52,6 +61,7 @@ model User {
 
   subscriber      Subscriber?
   serviceProvider ServiceProvider?
+  cart            Cart[]
 
   @@map("user")
 }
@@ -87,34 +97,35 @@ model Service {
   serviceTypeId String
   service       ServiceType @relation(fields: [serviceTypeId], references: [id])
 
-
   feedback      Feedback[]
   servicePlaced ServicePlaced[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  cart      Cart[]
 
   @@map("service")
 }
 
 model ServiceType {
-  id                 String            @id @default(uuid())
-  title              String            @unique
-  
-  service            Service[]
-  serviceProvider    ServiceProvider[]
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt 
+  id    String @id @default(uuid())
+  title String @unique
+
+  service         Service[]
+  serviceProvider ServiceProvider[]
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 
   @@map("serviceType")
 }
 
 model ServiceProvider {
-  id        String  @id @default(uuid())
-  user      User    @relation(fields: [userId], references: [id])
-  userId    String  @unique
+  id         String @id @default(uuid())
+  providerId String @unique
+  user       User   @relation(fields: [userId], references: [id])
+  userId     String @unique
 
-  serviceTypeId String      @unique
+  serviceTypeId String
   serviceType   ServiceType @relation(fields: [serviceTypeId], references: [id])
 
   availability  Boolean
@@ -141,52 +152,20 @@ model Subscriber {
 }
 
 model ShippingAddress {
-  id String @id @default(uuid())
-
+  id           String     @id @default(uuid())
+  address      String
+  street       String
+  area         String
+  city         String
+  isDefault    Boolean
   subscriberId String
   subscriber   Subscriber @relation(fields: [subscriberId], references: [id])
-
-  shippingNumber String
-  country        String
-  street         String
-  town           String
-  city           String
-  address        String
-  label          String
-  contactNo      String
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  label        String
+  contactNo    String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
 
   @@map("shippingAddress")
-}
-
-model Order {
-  id              String         @id @default(uuid())
-  subscriberId    String
-  subscriber      Subscriber     @relation(fields: [subscriberId], references: [id])
-  servicePlacedId String
-  feedback        Feedback[]
-  servicePlaced   ServicePlaced?
-  createdAt       DateTime       @default(now())
-  updatedAt       DateTime       @updatedAt
-
-  @@map("order")
-}
-
-model ServicePlaced {
-  id         String @id @default(uuid())
-  bookedDate String
-
-  orderId           String          @unique
-  order             Order           @relation(fields: [orderId], references: [id])
-  serviceId         String
-  service           Service         @relation(fields: [serviceId], references: [id])
-  serviceProviderId String
-  serviceProvider   ServiceProvider @relation(fields: [serviceProviderId], references: [id])
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-
-  @@map("servicePlaced")
 }
 
 model Feedback {
@@ -220,4 +199,85 @@ model Media {
   service           Service?
 
   @@map("media")
+}
+
+model Cart {
+  id          String  @id @default(uuid())
+  userId      String
+  bookingDate String?
+  user        User    @relation(fields: [userId], references: [id])
+  serviceId   String
+  service     Service @relation(fields: [serviceId], references: [id])
+
+  @@map("cart")
+}
+
+// enum OrderAssignmentStatus {
+//   OrderCreated 
+//   OrderConfirmed
+//   WorkerMoving
+//   Working
+//   OrderFinished
+  
+
+// }
+
+model Order {
+  id     String @id @default(uuid())
+  cartId String @unique
+
+  // assignmentStatus OrderAssignmentStatus @default(OrderCreated)
+  subscriberId     String
+  status           Status                @default(pending)
+
+  subscriber    Subscriber     @relation(fields: [subscriberId], references: [id])
+  feedback      Feedback[]
+  servicePlaced ServicePlaced?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("order")
+}
+
+model ServicePlaced {
+  id String @id @default(uuid())
+
+  bookingDate       String
+  orderId           String  @unique
+  serviceId         String
+  serviceProviderId String
+  paymentId         String? @unique
+  issueItemName     String
+  issueDetails      String
+
+  order           Order           @relation(fields: [orderId], references: [id])
+  service         Service         @relation(fields: [serviceId], references: [id])
+  serviceProvider ServiceProvider @relation(fields: [serviceProviderId], references: [id])
+  payment         Payment?        @relation(fields: [paymentId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("servicePlaced")
+}
+
+model Payment {
+  id String @id @default(uuid())
+
+  price                   String
+  paymentVarificationCode String?
+  status                  PaymentStatus
+  paymentMethod           PaymentMethods?
+  servicePlaced           ServicePlaced?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("payment")
+}
+
+enum PaymentStatus {
+  paid
+  pending
 }
