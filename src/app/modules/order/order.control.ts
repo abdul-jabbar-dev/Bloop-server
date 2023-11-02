@@ -58,13 +58,11 @@ const createOrderDB = async ({
     if (!orderedService) {
       throw new Error("Invalid Service Data ");
     }
-    const serviceProvider = await asyncDB.serviceProvider.findFirst({
+
+    let serviceProvider = await asyncDB.serviceProvider.findFirst({
       include: { servicePlaced: true },
       where: {
         serviceType: { id: orderedService.serviceTypeId },
-        servicePlaced: {
-          some: { NOT: { bookingDate: oldServicePlacedData.bookingDate } },
-        },
       },
     });
     if (!serviceProvider) {
@@ -72,17 +70,34 @@ const createOrderDB = async ({
         "No Worker available in " + oldServicePlacedData.bookingDate
       );
     }
+    if (serviceProvider?.servicePlaced?.length! > 0) {
+      serviceProvider = await asyncDB.serviceProvider.findFirst({
+        include: { servicePlaced: true },
+        where: {
+          serviceType: { id: orderedService.serviceTypeId },
+          servicePlaced: {
+            some: { NOT: { bookingDate: oldServicePlacedData.bookingDate } },
+          },
+        },
+      });
+      if (!serviceProvider) {
+        throw new Error(
+          "No Worker available in " + oldServicePlacedData.bookingDate
+        );
+      }
+    }
+
     order = await asyncDB.order.create({
       data: { subscriberId: orderData.subscriberId, cartId: orderData.cartId },
     });
     if (!order) {
       throw new Error("Failed to create order");
     }
-
     const isProviderAvailable = await availableProviderDate({
       providerId: serviceProvider.id,
       bookingDate: oldServicePlacedData.bookingDate,
     });
+
     if (!isProviderAvailable.isAvailable) {
       throw new Error(
         "Service provider not available in " +
