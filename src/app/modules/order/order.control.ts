@@ -58,13 +58,11 @@ const createOrderDB = async ({
     if (!orderedService) {
       throw new Error("Invalid Service Data ");
     }
-    const serviceProvider = await asyncDB.serviceProvider.findFirst({
+
+    let serviceProvider = await asyncDB.serviceProvider.findFirst({
       include: { servicePlaced: true },
       where: {
         serviceType: { id: orderedService.serviceTypeId },
-        servicePlaced: {
-          some: { NOT: { bookingDate: oldServicePlacedData.bookingDate } },
-        },
       },
     });
     if (!serviceProvider) {
@@ -72,6 +70,23 @@ const createOrderDB = async ({
         "No Worker available in " + oldServicePlacedData.bookingDate
       );
     }
+    if (serviceProvider?.servicePlaced?.length! > 0) {
+      serviceProvider = await asyncDB.serviceProvider.findFirst({
+        include: { servicePlaced: true },
+        where: {
+          serviceType: { id: orderedService.serviceTypeId },
+          servicePlaced: {
+            some: { NOT: { bookingDate: oldServicePlacedData.bookingDate } },
+          },
+        },
+      });
+      if (!serviceProvider) {
+        throw new Error(
+          "No Worker available in " + oldServicePlacedData.bookingDate
+        );
+      }
+    }
+
     order = await asyncDB.order.create({
       data: { subscriberId: orderData.subscriberId, cartId: orderData.cartId },
     });
@@ -83,6 +98,7 @@ const createOrderDB = async ({
       providerId: serviceProvider.id,
       bookingDate: oldServicePlacedData.bookingDate,
     });
+
     if (!isProviderAvailable.isAvailable) {
       throw new Error(
         "Service provider not available in " +
@@ -187,7 +203,12 @@ const findProviderOrderDB = async (user: JwtPayload, isActive: Status | {}) => {
     include: {
       feedback: true,
       servicePlaced: {
-        include: { payment: true, service: true, serviceProvider: true,order:true },
+        include: {
+          payment: true,
+          service: true,
+          serviceProvider: true,
+          order: true,
+        },
       },
     },
     where: {
@@ -216,7 +237,7 @@ const completeOrderDB = async (orderId: string, provider: ServiceProvider) => {
   if (!updateOrder) {
     throw new Error("Failed to completed order");
   }
- return updateOrder
+  return updateOrder;
 };
 
 const OrderControl = {
