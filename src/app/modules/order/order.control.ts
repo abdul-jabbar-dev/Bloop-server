@@ -202,7 +202,12 @@ const findProviderOrderDB = async (user: JwtPayload, isActive: Status | {}) => {
     include: {
       feedback: true,
       servicePlaced: {
-        include: { payment: true, service: true, serviceProvider: true,order:true },
+        include: {
+          payment: true,
+          service: true,
+          serviceProvider: true,
+          order: true,
+        },
       },
     },
     where: {
@@ -213,7 +218,6 @@ const findProviderOrderDB = async (user: JwtPayload, isActive: Status | {}) => {
     },
     orderBy: { servicePlaced: { createdAt: "desc" } },
   });
-
   return result;
 };
 
