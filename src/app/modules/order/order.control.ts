@@ -93,7 +93,6 @@ const createOrderDB = async ({
     if (!order) {
       throw new Error("Failed to create order");
     }
-
     const isProviderAvailable = await availableProviderDate({
       providerId: serviceProvider.id,
       bookingDate: oldServicePlacedData.bookingDate,
@@ -219,7 +218,6 @@ const findProviderOrderDB = async (user: JwtPayload, isActive: Status | {}) => {
     },
     orderBy: { servicePlaced: { createdAt: "desc" } },
   });
-
   return result;
 };
 
