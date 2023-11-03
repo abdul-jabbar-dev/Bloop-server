@@ -8,6 +8,8 @@ import catchAsync from "../../../shared/catchAsync";
 import DB from "../../../db/prismaClient";
 import OrderControl from "./order.control";
 import sendResponse from "../../../shared/Response/sendResponse";
+import ShippingAddressControl from "../shippingAddress/shippingAddress.control";
+import ShippingAddressService from "../shippingAddress/shippingAddress.service";
 
 const availableProviderDate = catchAsync(async (req, res) => {
   const { providerId } = req.params;
@@ -36,7 +38,7 @@ const findProviderActiveOrder = catchAsync(async (req, res) => {
 });
 const findProviderAllOrder = catchAsync(async (req, res) => {
   const user = req.user!;
-  console.log(user)
+  console.log(user);
   const result = await OrderControl.findProviderOrderDB(user, {});
   sendResponse(res, { data: result });
 });
@@ -52,6 +54,14 @@ const createOrder = catchAsync(async (req, res) => {
   const existCart = await DB.order.findUnique({
     where: { cartId: req.body.cartId },
   });
+  const shippingAddress = await DB.shippingAddress.findFirst({
+    include: { subscriber: true },
+    where: { subscriberId: subscriber.id, isDefault: true }, 
+  });
+  if (!shippingAddress) {
+    throw new Error("No Shipping address selected");
+  }
+  console.log(shippingAddress);
   if (existCart) {
     sendResponse(res, { data: existCart });
   }

@@ -104,10 +104,10 @@ const createOrderDB = async ({
           isProviderAvailable.assignment?.bookingDate
       );
     }
+    // console.log(isProviderAvailable);
     newServicePlacedData["orderId"] = order.id;
     newServicePlacedData["serviceProviderId"] =
       isProviderAvailable.isExistProvider.id;
-    console.log(newServicePlacedData);
     // order created
     // -----------------------------------------------------servicePlaced
     // console.log(order);
