@@ -104,7 +104,7 @@ const loginUserDb = async ({
         { expiresIn: config.refreshToken.validate }
       ),
     },
-  }); 
+  });
   if (!newLoginDetails) {
     throw new Error("Login failed");
   }
@@ -393,7 +393,6 @@ const getMyProfileDb = async (user: JwtPayload) => {
   return result;
 };
 const createServiceProviderDb = async (newProvider: CreateServiceProvider) => {
- 
   try {
     let createNewProvider: Record<string, any> | null = null;
     await DB.$transaction(async (asyncDB) => {
@@ -435,11 +434,12 @@ const createServiceProviderDb = async (newProvider: CreateServiceProvider) => {
           "invalid update user or credential information! try again"
         );
       }
-    });
+    },{timeout:20000});
     if (!createNewProvider) {
       throw new Error("Service provider create failed try again");
     } else return createNewProvider;
   } catch (error) {
+    console.log(error);
     return Promise.reject(error);
   }
 };
@@ -513,7 +513,7 @@ const updateUserDb = async (
       });
       if (!updateStatus) {
         throw new Error("Invalid update status");
-      } 
+      }
     });
 
     return updateProfile;

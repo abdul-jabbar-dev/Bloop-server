@@ -48,7 +48,7 @@ const createUserByProvider = catchAsync(async (req, res) => {
       const result = await UserService.createUserByProviderDb(
         user,
         uploadedImage
-      ); 
+      );
       sendResponse(res, {
         data: result,
       });
@@ -119,8 +119,7 @@ const createServiceProvider = catchAsync(async (req, res) => {
     throw new Error("Invalid user id! create user first");
   } else if (!user.email || user.status === "deactive") {
     throw new Error("User account is deactivated");
-    } 
-
+  } 
   const result = await UserService.createServiceProviderDb(providerInfo);
   sendResponse(res, {
     data: result,

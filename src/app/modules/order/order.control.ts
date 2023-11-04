@@ -1,7 +1,6 @@
 import {
   Order,
   PaymentMethods,
-  Prisma,
   ServicePlaced,
   ServiceProvider,
   Status,
@@ -10,7 +9,10 @@ import DB from "../../../db/prismaClient";
 import { JwtPayload } from "jsonwebtoken";
 
 type TMakeOrder = {
-  orderData: Omit<Order, "createdAt" | "updatedAt" | "id" | "status">;
+  orderData: Omit<
+    Order,
+    "createdAt" | "updatedAt" | "id" | "status" | "shippingAddressId"
+  >;
   oldServicePlacedData: Omit<
     ServicePlaced,
     "id" | "paymentId" | "createdAt" | "updatedAt" | "orderId"
@@ -58,7 +60,12 @@ const createOrderDB = async ({
     if (!orderedService) {
       throw new Error("Invalid Service Data ");
     }
-
+    const shippingAddress = await asyncDB.shippingAddress.findFirst({
+      where: { isDefault: true, subscriberId: orderData.subscriberId },
+    });
+    if (!shippingAddress) {
+      throw new Error("No shipping Address selected");
+    }
     let serviceProvider = await asyncDB.serviceProvider.findFirst({
       include: { servicePlaced: true },
       where: {
@@ -88,7 +95,11 @@ const createOrderDB = async ({
     }
 
     order = await asyncDB.order.create({
-      data: { subscriberId: orderData.subscriberId, cartId: orderData.cartId },
+      data: {
+        subscriberId: orderData.subscriberId,
+        cartId: orderData.cartId,
+        shippingAddressId: shippingAddress.id,
+      },
     });
     if (!order) {
       throw new Error("Failed to create order");
@@ -132,6 +143,7 @@ const findByCartDB = async ({ cartId }: { cartId: string }) => {
   const result = await DB.order.findUnique({
     where: { cartId },
     include: {
+      shippingAddress: true,
       servicePlaced: { include: { payment: true, service: true, order: true } },
     },
   });
@@ -188,6 +200,7 @@ const findMyOrderDB = async (user: JwtPayload) => {
   const result = await DB.order.findMany({
     where: { subscriber: { userId: user.id } },
     include: {
+      shippingAddress: true,
       feedback: true,
       servicePlaced: {
         include: { payment: true, service: true, serviceProvider: true },
@@ -196,11 +209,25 @@ const findMyOrderDB = async (user: JwtPayload) => {
   });
   return result;
 };
+const getAllOrdersDB = async () => {
+  const result = await DB.order.findMany({
+    include: {
+      shippingAddress: true,
+      feedback: true,
+      servicePlaced: {
+        include: { payment: true, service: true, serviceProvider: true },
+      },
+    },
+  });
+  console.log(result)
+  return result;
+};
 
 const findProviderOrderDB = async (user: JwtPayload, isActive: Status | {}) => {
   const result = await DB.order.findMany({
     include: {
       feedback: true,
+      shippingAddress: true,
       servicePlaced: {
         include: {
           payment: true,
@@ -246,5 +273,6 @@ const OrderControl = {
   findMyOrderDB,
   findProviderOrderDB,
   completeOrderDB,
+  getAllOrdersDB,
 };
 export default OrderControl;

@@ -29,6 +29,11 @@ OrderRoute.get(
   OrderService.findByCart
 );
 OrderRoute.get(
+  "/all-orders",
+  Auth(["admin"]),
+  OrderService.allOrders
+);
+OrderRoute.get(
   "/find-my-orders",
   Auth(["subscriber"]),
   OrderService.findMyOrder

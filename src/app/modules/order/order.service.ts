@@ -36,8 +36,17 @@ const findProviderActiveOrder = catchAsync(async (req, res) => {
 });
 const findProviderAllOrder = catchAsync(async (req, res) => {
   const user = req.user!;
-  console.log(user)
+  console.log(user);
   const result = await OrderControl.findProviderOrderDB(user, {});
+  sendResponse(res, { data: result });
+});
+
+const allOrders = catchAsync(async (req, res) => {
+  const user = req.user!;
+  if (user.role !== "admin") {
+    throw new Error("Invalid access");
+  }
+  const result = await OrderControl.getAllOrdersDB( );
   sendResponse(res, { data: result });
 });
 
@@ -55,7 +64,10 @@ const createOrder = catchAsync(async (req, res) => {
   if (existCart) {
     sendResponse(res, { data: existCart });
   }
-  const orderData: Omit<Order, "createdAt" | "updatedAt" | "id" | "status"> = {
+  const orderData: Omit<
+    Order,
+    "createdAt" | "updatedAt" | "id" | "status" | "shippingAddressId"
+  > = {
     subscriberId: subscriber.id,
     cartId: req.body.cartId,
   };
@@ -107,5 +119,6 @@ const OrderService = {
   findProviderAllOrder,
   findProviderActiveOrder,
   completeOrder,
+  allOrders,
 };
 export default OrderService;
